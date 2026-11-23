@@ -226,6 +226,9 @@ section.view.on{display:block}
 .card.is-sold .pic{background:#e9e6e3}
 .card.is-sold:hover{transform:none}
 .card.is-sold .pic img{opacity:.55}
+.card.is-prep{background:#fffaf0}
+.card.is-prep:hover{transform:none}
+.preptxt{display:inline-block;background:#fff0bf;color:#8a5a00;border:2px solid var(--line);border-radius:999px;padding:3px 14px 1px;font-size:17px}
 .soldtxt{display:inline-block;background:#8a817a;color:#fff;border:2px solid var(--line);border-radius:999px;padding:3px 14px 1px;font-size:17px}
 .hot{position:absolute;top:-34px;left:-14px;width:72px;height:86px;z-index:4;pointer-events:none;animation:flick 1s ease-in-out infinite;transform-origin:50% 90%}
 .hot svg{width:100%;height:100%;filter:drop-shadow(0 4px 0 rgba(0,0,0,.2))}
@@ -742,8 +745,19 @@ const PREVIEW = !API_URL || !/github\.io$/.test(location.hostname);
 const $ = id => document.getElementById(id);
 const won = n => Number(n||0).toLocaleString('ko-KR');
 const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const imgSrc = k => k ? `img/items/${encodeURIComponent(k)}.webp` : 'img/xmas/chick.webp';
-const IMG_FALLBACK = "this.onerror=null;this.src='img/xmas/chick.webp'";
+/* 이미지가 없는 물건은 이름을 보고 간단한 그림을 즉석에서 그려요 */
+const PH_ICONS=[[/키캡|키보드/,'⌨️'],[/사탕|캔디|롤리|막대/,'🍭'],[/젤리|구미/,'🍬'],[/초콜|초코/,'🍫'],[/쿠키|비스킷/,'🍪'],[/칩|과자|스낵|팝콘/,'🍿'],[/주스|음료|우유|드링크/,'🧃'],[/떡|빵|케이크/,'🍰'],[/라면|컵/,'🍜'],
+  [/연필/,'✏️'],[/볼펜|펜|마커|형광/,'🖊️'],[/노트|공책|수첩|메모/,'📒'],[/스티커/,'⭐'],[/키링|열쇠/,'🔑'],[/지우개/,'🧽'],[/테이프/,'🎀'],[/필통|파우치/,'👝'],[/반지|불빛|라이트/,'💍'],[/핫팩/,'🔥'],[/양말/,'🧦'],[/인형|피규어/,'🧸'],[/자|가위/,'✂️'],
+  [/면제|쿠폰|권/,'🎫'],[/산타/,'🎅'],[/트리/,'🎄'],[/눈사람/,'⛄']];
+const PH_BG={'간식':['#fff1d6','#ffb74d'],'문구':['#e3f2ff','#64b5f6'],'쿠폰':['#f1e8ff','#9575cd'],'기타':['#e8f7ee','#4caf50']};
+const phCache={};
+function phImg(name,cat){ const key=name+'|'+cat; if(phCache[key]) return phCache[key];
+  const ic=(PH_ICONS.find(([re])=>re.test(name||''))||[0,cat==='쿠폰'?'🎫':cat==='간식'?'🍬':'🎁'])[1], [bg,bd]=PH_BG[cat]||['#fff0f0','#e5403a'];
+  const nm=String(name||'').replace(/[<&>"]/g,''); const short=nm.length>9?nm.slice(0,9)+'…':nm;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect x="6" y="6" width="188" height="188" rx="30" fill="${bg}" stroke="${bd}" stroke-width="6" stroke-dasharray="14 10"/><circle cx="100" cy="86" r="52" fill="#fff" stroke="${bd}" stroke-width="4"/><text x="100" y="108" font-size="62" text-anchor="middle">${ic}</text><text x="100" y="172" font-size="22" font-family="sans-serif" font-weight="700" fill="#5a3b2e" text-anchor="middle">${short}</text></svg>`;
+  return phCache[key]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg); }
+const imgSrc = (k,name,cat) => k ? `img/items/${encodeURIComponent(k)}.webp` : (name ? phImg(name,cat) : 'img/xmas/chick.webp');
+const IMG_FALLBACK = "this.onerror=null;this.src=this.dataset.ph||'img/xmas/chick.webp'";
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
 function ss(k,v){try{ if(v===undefined) return sessionStorage.getItem(k); if(v===null) sessionStorage.removeItem(k); else sessionStorage.setItem(k,v);}catch(e){return null}}
 
@@ -757,6 +771,8 @@ function mockInit(){
   mockDB.wins.push({'시간':'12/17 09:40:00','이름':'정도윤','게임':'랜덤박스','등급':'1등','상품명':'배달의민족 3만원권','이미지':'baemin','학생코드':''});
   mockDB.box[0]['남은수량']=0;
   mockDB.items.find(i=>i['ID']==='nemo')['판매']='N';
+  mockDB.items.push(Object.assign({},mockDB.items.find(i=>i['ID']==='pen'),{'ID':'p0001','이름':'크리스마스 키캡','이미지':'','가격':3000}));
+  mockDB.items.push(Object.assign({},mockDB.items.find(i=>i['ID']==='damla'),{'ID':'p0002','이름':'막대사탕','이미지':'','가격':''}));
   mockDB.users.forEach((u,i)=>{u['학년']=['4학년','5학년','6학년'][i%3];u['담임']=['박','최','이'][i%3]+'선생'});
   [['이서연','떡볶이가 진짜 맛있었어요!! 또 해 주세요 🌶️'],['박지호','선생님들 항상 감사합니다 ❤️'],['최하은','룰렛 돌리는 거 너무 재밌어요ㅎㅎ']].forEach(([n,t],k)=>
     mockDB.comments.push({'시간':`12/17 10:1${k}:00`,'학년':'','이름':n,'내용':t,'상태':'','학생코드':''}));
@@ -801,9 +817,10 @@ const CATMETA={
   '참가권':{t:'Game Tickets',d:'룰렛·랜덤박스·가위바위보 참가권',ch:'chick',say:'게임 티켓은 3개까지만!'},
   '쿠폰':{t:'Coupons',d:'숙제·시험 면제권 (종류별 1장씩!)',ch:'cat_fish',say:'선생님 허락 받고 사용해줘!'},
   '간식':{t:'Snack',d:'달콤 바삭 크리스마스 간식',ch:'hamster_magni',say:'냠냠, 뭐 먹을까?'},
+  '기타':{t:'Special Gifts',d:'특별한 크리스마스 선물',ch:'whale',say:'이건 뭘까? 궁금하지?'},
   '문구':{t:'Stationery',d:'귀여운 크리스마스 문구',ch:'rabbit_flower',say:'크리스마스 문구 GET!'},
 };
-const CATORDER=['참가권','쿠폰','간식','문구'];
+const CATORDER=['참가권','쿠폰','간식','문구','기타'];
 
 function applyState(st){
   S=st;
@@ -818,7 +835,7 @@ function applyState(st){
 
 /* ================= SHOP ================= */
 function maxAddable(it){
-  if(it.off) return 0;
+  if(it.off||it.prep) return 0;
   let m=it.stock;
   if(it.limit>0) m=Math.min(m,it.limit-it.mine);
   return Math.max(0,m);
@@ -834,14 +851,14 @@ function renderShop(){
   }).join('');
 }
 function cardHTML(it){
-  const q=cart[it.id]||0, max=maxAddable(it), sold=it.off||it.stock<=0, hot=!sold&&(S.popular||[]).some(p=>p.id===it.id);
+  const prep=!it.off&&it.prep, q=cart[it.id]||0, max=maxAddable(it), sold=!prep&&(it.off||it.stock<=0), hot=!sold&&!prep&&(S.popular||[]).some(p=>p.id===it.id);
   const limTxt=it.limit>0?`<span class="limit-badge">${it.mine>=it.limit?'구매 완료 ✓':`1인 ${it.limit}개${it.limit>1?` · ${it.mine}/${it.limit}`:''}`}</span>`:'';
-  return `<div class="card ${sold?'is-sold':''} ${hot?'is-hot':''}">${hot?'<span class="hot"><svg viewBox="0 0 60 72"><path d="M30 2C34 18 50 24 52 44C54 62 42 70 30 70C16 70 6 60 8 44C9 34 16 30 18 20C24 28 24 34 28 36C30 24 26 14 30 2Z" fill="#ff6a2b" stroke="#2b1a14" stroke-width="3.5" stroke-linejoin="round"/><path d="M30 30C33 40 42 44 42 54C42 63 36 66 30 66C23 66 18 61 19 53C20 47 24 46 26 40C28 44 29 46 30 46Z" fill="#ffd23d"/></svg><b>인기!</b></span>':''}${limTxt}
-    <div class="pic"><img src="${imgSrc(it.img)}" alt="${esc(it.name)}" onerror="${IMG_FALLBACK}"></div>
+  return `<div class="card ${sold?'is-sold':''} ${prep?'is-prep':''} ${hot?'is-hot':''}">${hot?'<span class="hot"><svg viewBox="0 0 60 72"><path d="M30 2C34 18 50 24 52 44C54 62 42 70 30 70C16 70 6 60 8 44C9 34 16 30 18 20C24 28 24 34 28 36C30 24 26 14 30 2Z" fill="#ff6a2b" stroke="#2b1a14" stroke-width="3.5" stroke-linejoin="round"/><path d="M30 30C33 40 42 44 42 54C42 63 36 66 30 66C23 66 18 61 19 53C20 47 24 46 26 40C28 44 29 46 30 46Z" fill="#ffd23d"/></svg><b>인기!</b></span>':''}${limTxt}
+    <div class="pic"><img src="${imgSrc(it.img,it.name,it.cat)}" data-ph="${phImg(it.name,it.cat)}" alt="${esc(it.name)}" onerror="${IMG_FALLBACK}"></div>
     <div class="name">${esc(it.name)}${it.desc?`<button class="info" data-desc="${esc(it.desc)}" data-nm="${esc(it.name)}" aria-label="설명 보기">?</button>`:''}</div>
-    <span class="tag">${won(it.price)}원</span>
-    <div class="stock">${sold?'<span class="soldtxt">선물이 매진되었어요.</span>':stockTag({left:it.stock,init:it.base||it.stock})}</div>
-    ${sold?'':`<div class="stepper"><button data-id="${it.id}" data-d="-1" ${q<=0?'disabled':''}>−</button><span class="q">${q}</span><button class="plus" data-id="${it.id}" data-d="1" ${q>=max?'disabled':''}>+</button></div>`}
+    ${prep?'':`<span class="tag">${won(it.price)}원</span>`}
+    <div class="stock">${prep?'<span class="preptxt">곧 판매 시작! ⏳</span>':sold?'<span class="soldtxt">선물이 매진되었어요.</span>':stockTag({left:it.stock,init:it.base||it.stock})}</div>
+    ${(sold||prep)?'':`<div class="stepper"><button data-id="${it.id}" data-d="-1" ${q<=0?'disabled':''}>−</button><span class="q">${q}</span><button class="plus" data-id="${it.id}" data-d="1" ${q>=max?'disabled':''}>+</button></div>`}
   </div>`;
 }
 document.addEventListener('click',e=>{
@@ -860,7 +877,7 @@ function renderCart(){
   const n=Object.values(cart).reduce((a,b)=>a+b,0); $('cartN').textContent=n;
   const ids=Object.keys(cart);
   $('cartList').innerHTML=ids.length?ids.map(id=>{const it=S.items.find(i=>i.id===id),q=cart[id];
-    return `<li><img src="${imgSrc(it.img)}" alt="" onerror="${IMG_FALLBACK}"><div class="nm">${esc(it.name)}<small>${won(it.price)}원 × ${q} = ${won(it.price*q)}원</small></div>
+    return `<li><img src="${imgSrc(it.img,it.name,it.cat)}" alt="" onerror="${IMG_FALLBACK}"><div class="nm">${esc(it.name)}<small>${won(it.price)}원 × ${q} = ${won(it.price*q)}원</small></div>
     <div class="stepper"><button data-id="${id}" data-d="-1">−</button><span class="q">${q}</span><button class="plus" data-id="${id}" data-d="1" ${q>=maxAddable(it)?'disabled':''}>+</button></div></li>`}).join('')
     :'<li class="empty">장바구니가 비어 있어요 🛒<br>마켓에서 + 를 눌러 담아 보세요!</li>';
   const t=cartTotal(), after=S.user.points-t;

@@ -98,7 +98,7 @@ function E_state(db, u){
   var name = E_str(u['이름']);
   return {
     user: { name: name, points: E_num(u['포인트']), tickets: E_tickets(db,u), grade: E_str(u['학년']), teacher: E_str(u['담임']) },
-    items: db.items.filter(function(i){ return E_str(i['ID']) !== ''; }).map(function(i){ var id=E_str(i['ID']), st=E_stock(db,i); return { off: !E_onSale(i),
+    items: db.items.filter(function(i){ return E_str(i['ID']) !== ''; }).map(function(i){ var id=E_str(i['ID']), st=E_stock(db,i); return { off: !E_onSale(i), prep: E_num(i['가격']) <= 0,
       id:id, cat:E_str(i['카테고리']), name:E_str(i['이름']), price:E_num(i['가격']), stock:st.day, base:st.base,
       limit:E_limit(i), img:E_str(i['이미지']), desc:E_str(i['설명']), mine:E_bought(db,u,id) }; }),
     box: db.box.filter(function(b){ return E_str(b['상품명']); }).map(function(b){ var l = E_num(b['남은수량']); return {grade:E_str(b['등급']), name:E_str(b['상품명']), img:E_str(b['이미지']), left:l, init:Math.max(E_num(b['처음수량']), l)}; }),
@@ -122,6 +122,7 @@ function E_order(db, req, now){
   cart.forEach(function(c){
     var it = db.items.filter(function(i){ return E_str(i['ID']) === E_str(c.id) && E_onSale(i); })[0];
     if (!it) throw new Error('지금 팔지 않는 물건이 장바구니에 있어요.');
+    if (E_num(it['가격']) <= 0) throw new Error(E_str(it['이름']) + '은(는) 아직 판매 준비 중이에요!');
     var q = Math.floor(E_num(c.qty)), stock = E_stock(db,it).day, lim = E_limit(it);
     if (stock < q) throw new Error(stock <= 0 ? E_str(it['이름']) + '은(는) 오늘 다 팔렸어요!' : E_str(it['이름']) + ' 수량이 부족해요! 조금만 줄여 주세요.');
     if (lim > 0 && E_bought(db,u,E_str(it['ID'])) + q > lim) throw new Error(E_str(it['이름']) + '은(는) 한 사람당 ' + lim + '개까지만 살 수 있어요!');
@@ -579,6 +580,7 @@ function onOpen() {
     .addItem('명단 → 학생 탭 반영하기 (남은 포인트 새로고침)', '명단반영')
     .addItem('재고 다시 계산하기', '재고반영')
     .addItem('물품 구매 탭 만들기/정리하기', '물품구매시트')
+    .addItem('물품 구매 목록 → 사이트 물품 맞추기', '물품동기화')
     .addSeparator()
     .addItem('지금 탭: 이름순 정렬 (가나다)', '이름순정렬')
     .addItem('지금 탭: 선생님 → 이름순 정렬 (명단·편지)', '담임순정렬')
@@ -765,7 +767,7 @@ function 물품구매시트() {
         var old = sh.getRange(first,1,sh.getLastRow()-first+1,5).getValues();   // 물품명, 카테고리, 개별 가격, 수량, 총 가격
         old.forEach(function(r){
           if (String(r[0]).trim() === '') return;
-          var c0 = String(r[1]).trim(), cat = ['간식','문구'].indexOf(c0) >= 0 ? c0 : (c0 ? '기타' : '');
+          var c0 = String(r[1]).trim(), cat = ['간식','문구','면제권'].indexOf(c0) >= 0 ? c0 : (c0 ? '기타' : '');
           var qty = Number(r[3]) || '', price = Number(r[2]) || '', total = Number(r[4]) || (qty && price ? qty * price : '');
           carry.push([r[0], cat, qty || 1, total || price, '', '', qty || '']);
         });
@@ -781,7 +783,7 @@ function 물품구매시트() {
   sh.setTabColor('#ff9800');
 
   sh.getRange('A1').setValue('🛒 물품 구매 · 예산 관리').setFontSize(18).setFontWeight('bold').setFontColor('#b50005');
-  sh.getRange('A2').setValue('하얀 칸만 적으면 돼요. 개별 가격은 묶음 가격 ÷ 묶음 수량으로 자동 계산, 현 재고는 [물품] 탭에서 자동으로 가져와요 (물품명이 같아야 해요).').setFontColor('#777777').setFontSize(10);
+  sh.getRange('A2').setValue('흰 칸만 입력함. 개별 가격은 묶음 가격 ÷ 묶음 수량으로 자동 계산되며, 현 재고는 [물품] 탭에서 자동 연동됨 (물품명 일치 시).').setFontColor('#777777').setFontSize(10);
 
   sh.getRange(3,1,1,BUY_H.length).setValues([BUY_H]).setFontWeight('bold').setFontColor('#ffffff').setHorizontalAlignment('center').setVerticalAlignment('middle');
   sh.getRange(3,1,1,8).setBackground('#ff9800');
@@ -811,25 +813,25 @@ function 물품구매시트() {
   sh.getRange(first,8,ROWS,1).setNumberFormat('#,##0"개"').setBackground('#f3f3f3').setFontColor('#555555').setFontWeight('bold');
 
   sh.getRange(first,2,ROWS,1).setDataValidation(SpreadsheetApp.newDataValidation()
-    .requireValueInList(['간식','문구','기타'], true).setAllowInvalid(false).build());
+    .requireValueInList(['간식','문구','면제권','기타'], true).setAllowInvalid(false).build());
   var it = ss.getSheetByName(TAB_NAMES.items);
   if (it) {
     var ih = it.getRange(1,1,1,it.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
     var nc = ih.indexOf('이름') + 1;
     if (nc > 0) sh.getRange(first,1,ROWS,1).setDataValidation(SpreadsheetApp.newDataValidation()
       .requireValueInRange(it.getRange(2, nc, Math.max(it.getMaxRows()-1,1), 1), true).setAllowInvalid(true)
-      .setHelpText('[물품] 탭 이름과 똑같이 쓰면 현 재고가 자동으로 보여요. 다른 이름도 적을 수 있어요.').build());
+      .setHelpText('[물품] 탭 이름과 동일하게 입력 시 현 재고 자동 표시됨. 다른 이름도 입력 가능함.').build());
   }
-  var num = SpreadsheetApp.newDataValidation().requireNumberGreaterThanOrEqualTo(0).setAllowInvalid(false).setHelpText('숫자만 넣어 주세요').build();
+  var num = SpreadsheetApp.newDataValidation().requireNumberGreaterThanOrEqualTo(0).setAllowInvalid(false).setHelpText('숫자만 입력 가능함').build();
   sh.getRange(first,3,ROWS,2).setDataValidation(num);
   sh.getRange(first,7,ROWS,1).setDataValidation(num);
-  sh.getRange(3,1).setNote('[물품] 탭의 "이름"과 똑같이 쓰면 현 재고가 자동으로 채워져요');
-  sh.getRange(3,3).setNote('한 묶음(한 봉지·한 박스)에 들어 있는 개수');
-  sh.getRange(3,4).setNote('한 묶음 가격');
-  sh.getRange(3,5).setNote('자동: 묶음 가격 ÷ 묶음 수량 (원 단위 반올림)');
-  sh.getRange(3,6).setNote('구매한 쇼핑몰 주소를 붙여넣으세요 (누르면 바로 열려요)');
-  sh.getRange(3,7).setNote('처음에 준비한 전체 개수. 사용한 금액 계산에도 쓰여요 (필요한 묶음 수 × 묶음 가격)');
-  sh.getRange(3,8).setNote('자동: [물품] 탭의 현재고 (팔린 만큼 줄어요). 사이트에서 안 파는 물건은 "없음"');
+  sh.getRange(3,1).setNote('[물품] 탭의 "이름"과 동일하게 입력 시 현 재고 자동 연동됨');
+  sh.getRange(3,3).setNote('한 묶음(봉지·박스)당 개수. 면제권은 1장 단위면 1 입력');
+  sh.getRange(3,4).setNote('한 묶음 가격. 면제권 등 자체 제작물은 인쇄·제작비 입력 (없으면 0)');
+  sh.getRange(3,5).setNote('자동 계산: 묶음 가격 ÷ 묶음 수량 (원 단위 반올림)');
+  sh.getRange(3,6).setNote('구매처 주소 입력 (클릭 시 바로 열림)');
+  sh.getRange(3,7).setNote('최초 준비 수량. 면제권은 미리 재단한 매수 입력. 사용 금액 계산에 활용됨 (필요 묶음 수 × 묶음 가격)');
+  sh.getRange(3,8).setNote('자동 연동: [물품] 탭의 현재고 (판매 시 차감됨). 사이트 미판매 물품은 "없음"으로 표시됨');
 
   // ---- 오른쪽 위: 예산 요약 (J~K) ----
   sh.setColumnWidth(9, 30); sh.setColumnWidth(10, 130); sh.setColumnWidth(11, 140);
@@ -838,11 +840,11 @@ function 물품구매시트() {
   sh.getRange('J3:J7').setValues([['전체 예산'],['총 인원'],['사용한 금액'],['남은 예산'],['1인당 사용 금액']]).setFontWeight('bold').setBackground('#fff3e0').setHorizontalAlignment('center');
   var budget = sh.getRange('K3');
   if (typeof budget.getValue() !== 'number' || budget.getFormula()) budget.setValue(0);
-  budget.setBackground('#ffffff').setNote('여기에 전체 예산을 직접 적어 주세요');
+  budget.setBackground('#ffffff').setNote('전체 예산 직접 입력');
   sh.getRange('K4').setFormula('=IFERROR(COUNTIFS(INDEX(\'학생\'!$A:$Z,0,MATCH("이름",\'학생\'!$1:$1,0)),"<>",INDEX(\'학생\'!$A:$Z,0,MATCH("학년",\'학생\'!$1:$1,0)),"<>샘플")-1,0)')
-    .setNote('자동: [학생] 탭 학생 수 (샘플 학생 제외). 직접 숫자를 적어도 돼요.').setBackground('#f3f3f3');
+    .setNote('자동 집계: [학생] 탭 학생 수 (샘플 학생 제외). 직접 입력도 가능함.').setBackground('#f3f3f3');
   sh.getRange('K5').setFormula('=ARRAYFORMULA(SUM(IF(' + D + '="",0,IF(ISNUMBER(' + G + ')*(' + C + '>0),ROUNDUP(' + G + '/' + C + ',0)*' + D + ',' + D + '))))')
-    .setNote('자동: 줄마다 (초기 재고 ÷ 묶음 수량, 올림) × 묶음 가격을 더해요. 초기 재고가 비어 있으면 묶음 1개 값으로 계산해요.').setBackground('#f3f3f3');
+    .setNote('자동 계산: 품목별 (초기 재고 ÷ 묶음 수량, 올림) × 묶음 가격의 합계. 초기 재고 미입력 시 묶음 1개 가격으로 계산함.').setBackground('#f3f3f3');
   sh.getRange('K6').setFormula('=K3-K5').setBackground('#fffde7').setFontSize(13);
   sh.getRange('K7').setFormula('=IF(K4>0,K5/K4,"")').setBackground('#f3f3f3');
   sh.getRange('K3').setNumberFormat('#,##0"원"'); sh.getRange('K4').setNumberFormat('#,##0"명"');
@@ -856,4 +858,66 @@ function 물품구매시트() {
     SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=AND(ISNUMBER($H' + first + '),$H' + first + '<=10)').setBackground('#ffd6d3').setFontColor('#b50005').setRanges([sh.getRange(first,8,ROWS,1)]).build()
   ]);
   SpreadsheetApp.flush();
+}
+
+/* ===== [물품 구매] 목록 → 사이트 [물품] 탭 맞추기 (메뉴에서 실행) ===== */
+var BUY_CAT_TO_ITEM = {'간식':'간식','문구':'문구','면제권':'쿠폰','기타':'기타'};
+function 물품동기화() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), ui = null;
+  try { ui = SpreadsheetApp.getUi(); } catch (x) {}
+  var buy = ss.getSheetByName(BUY_TAB), it = ss.getSheetByName(TAB_NAMES.items);
+  if (!buy || !it) { if (ui) ui.alert('[물품 구매] 또는 [물품] 탭이 없음'); return; }
+  var bl = buy.getLastRow(); if (bl < 4) { if (ui) ui.alert('[물품 구매] 탭에 입력된 물품이 없음'); return; }
+  var bh = buy.getRange(3,1,1,BUY_H.length).getValues()[0].map(function(x){ return String(x).trim(); });
+  var bv = buy.getRange(4,1,bl-3,BUY_H.length).getValues();
+  var want = {}, order = [];
+  bv.forEach(function(r){
+    var nm = String(r[bh.indexOf('물품명')]).trim(); if (!nm) return;
+    var cat = BUY_CAT_TO_ITEM[String(r[bh.indexOf('카테고리')]).trim()] || '기타';
+    var init = r[bh.indexOf('초기 재고')];
+    if (!want[nm]) order.push(nm);
+    want[nm] = { cat: cat, init: (init === '' || isNaN(Number(init))) ? null : Number(init) };
+  });
+  var ih = it.getRange(1,1,1,it.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
+  var c = function(n){ return ih.indexOf(n); };
+  var iv = it.getLastRow() > 1 ? it.getRange(2,1,it.getLastRow()-1,ih.length).getValues() : [];
+  var del = [], have = {}, ids = {};
+  iv.forEach(function(r){ ids[String(r[c('ID')]).trim()] = true; });
+  iv.forEach(function(r, i){
+    var id = String(r[c('ID')]).trim(), nm = String(r[c('이름')]).trim(), cat = String(r[c('카테고리')]).trim();
+    if (!id && !nm) return;
+    if (cat === '참가권') return;                     // 게임 참가권은 그대로 둠
+    if (!want[nm]) { del.push({ row: i + 2, name: nm }); return; }
+    have[nm] = i + 2;
+  });
+  var add = order.filter(function(nm){ return !have[nm]; });
+  if (ui) {
+    var msg = '[물품 구매] 목록 기준으로 사이트 [물품] 탭을 맞춤.\n\n' +
+      '• 삭제 ' + del.length + '개: ' + (del.map(function(d){ return d.name; }).join(', ') || '없음') + '\n' +
+      '• 추가 ' + add.length + '개: ' + (add.join(', ') || '없음') + '\n' +
+      '• 카테고리·초기재고 갱신: 나머지 일치 품목\n\n' +
+      '실행 전 [물품] 탭은 백업 탭으로 복사됨. 진행하시겠습니까?';
+    if (ui.alert('물품 목록 맞추기', msg, ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
+  }
+  it.copyTo(ss).setName('물품_백업_' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'MMdd_HHmm'));
+  // 갱신
+  Object.keys(have).forEach(function(nm){
+    var row = have[nm], w = want[nm];
+    it.getRange(row, c('카테고리') + 1).setValue(w.cat);
+    if (w.init !== null && c('초기재고') >= 0) it.getRange(row, c('초기재고') + 1).setValue(w.init);
+  });
+  // 삭제 (아래 줄부터)
+  del.sort(function(a,b){ return b.row - a.row; }).forEach(function(d){ it.deleteRow(d.row); });
+  // 추가: 가격(포인트)은 비워 둠 → 선생님이 입력하면 판매 시작
+  add.forEach(function(nm){
+    var id; do { id = 'p' + ('000' + Math.floor(Math.random() * 10000)).slice(-4); } while (ids[id]); ids[id] = true;
+    var w = want[nm], row = ih.map(function(h){
+      return ({'ID':id,'카테고리':w.cat,'이름':nm,'가격':'','초기재고':w.init === null ? 0 : w.init,'1인최대':'','이미지':'','판매':'Y','설명':''})[h];
+    }).map(function(v){ return v === undefined ? '' : v; });
+    it.appendRow(row);
+    it.getRange(it.getLastRow(), 1, 1, ih.length).setBackground('#fff3b0');
+    if (c('가격') >= 0) it.getRange(it.getLastRow(), c('가격') + 1).setNote('가격(포인트) 입력 필요. 입력 전에는 사이트에 "곧 판매 시작"으로 표시됨');
+  });
+  재고반영();
+  if (ui) ui.alert('완료됨', '삭제 ' + del.length + '개, 추가 ' + add.length + '개 처리함.\n새로 추가된 물품(노란 줄)은 [가격] 칸에 포인트 가격 입력 필요함.\n이미지는 사이트에서 임시 그림으로 표시됨.', ui.ButtonSet.OK);
 }
