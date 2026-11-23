@@ -779,7 +779,7 @@ function 물품구매시트() {
   }
   if (!sh) sh = ss.insertSheet(BUY_TAB);
   if (sh.getMaxRows() < last + 2) sh.insertRowsAfter(sh.getMaxRows(), last + 2 - sh.getMaxRows());
-  if (sh.getMaxColumns() < 12) sh.insertColumnsAfter(sh.getMaxColumns(), 12 - sh.getMaxColumns());
+  if (sh.getMaxColumns() < 14) sh.insertColumnsAfter(sh.getMaxColumns(), 14 - sh.getMaxColumns());
   sh.setTabColor('#ff9800');
 
   sh.getRange('A1').setValue('🛒 물품 구매 · 예산 관리').setFontSize(18).setFontWeight('bold').setFontColor('#b50005');
@@ -833,27 +833,45 @@ function 물품구매시트() {
   sh.getRange(3,7).setNote('최초 준비 수량. 면제권은 미리 재단한 매수 입력. 사용 금액 계산에 활용됨 (필요 묶음 수 × 묶음 가격)');
   sh.getRange(3,8).setNote('자동 연동: [물품] 탭의 현재고 (판매 시 차감됨). 사이트 미판매 물품은 "없음"으로 표시됨');
 
-  // ---- 오른쪽 위: 예산 요약 (J~K) ----
-  sh.setColumnWidth(9, 30); sh.setColumnWidth(10, 130); sh.setColumnWidth(11, 140);
+  // ---- 오른쪽: 큰 예산 박스 (J~M) ----
   var C = 'C' + first + ':C' + last, D = 'D' + first + ':D' + last, G = 'G' + first + ':G' + last;
-  sh.getRange('J2:K2').merge().setValue('💰 예산 요약').setFontWeight('bold').setFontSize(13).setHorizontalAlignment('center').setBackground('#b50005').setFontColor('#ffffff');
-  sh.getRange('J3:J7').setValues([['전체 예산'],['총 인원'],['사용한 금액'],['남은 예산'],['1인당 사용 금액']]).setFontWeight('bold').setBackground('#fff3e0').setHorizontalAlignment('center');
-  var budget = sh.getRange('K3');
-  if (typeof budget.getValue() !== 'number' || budget.getFormula()) budget.setValue(0);
-  budget.setBackground('#ffffff').setNote('전체 예산 직접 입력');
-  sh.getRange('K4').setFormula('=IFERROR(COUNTIFS(INDEX(\'학생\'!$A:$Z,0,MATCH("이름",\'학생\'!$1:$1,0)),"<>",INDEX(\'학생\'!$A:$Z,0,MATCH("학년",\'학생\'!$1:$1,0)),"<>샘플")-1,0)')
-    .setNote('자동 집계: [학생] 탭 학생 수 (샘플 학생 제외). 직접 입력도 가능함.').setBackground('#f3f3f3');
-  sh.getRange('K5').setFormula('=ARRAYFORMULA(SUM(IF(' + D + '="",0,IF(ISNUMBER(' + G + ')*(' + C + '>0),ROUNDUP(' + G + '/' + C + ',0)*' + D + ',' + D + '))))')
-    .setNote('자동 계산: 품목별 (초기 재고 ÷ 묶음 수량, 올림) × 묶음 가격의 합계. 초기 재고 미입력 시 묶음 1개 가격으로 계산함.').setBackground('#f3f3f3');
-  sh.getRange('K6').setFormula('=K3-K5').setBackground('#fffde7').setFontSize(13);
-  sh.getRange('K7').setFormula('=IF(K4>0,K5/K4,"")').setBackground('#f3f3f3');
-  sh.getRange('K3').setNumberFormat('#,##0"원"'); sh.getRange('K4').setNumberFormat('#,##0"명"');
-  sh.getRange('K5:K7').setNumberFormat('#,##0"원"');
-  sh.getRange('K3:K7').setFontWeight('bold').setHorizontalAlignment('right');
-  sh.getRange('J2:K7').setBorder(true,true,true,true,true,true,'#5c2b10',SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+  // 이전에 적어 둔 예산 금액은 살려 둠
+  var prevBudget = 0;
+  try {
+    var j3 = String(sh.getRange('J3').getValue()).trim();
+    if (j3 === '전체 예산') prevBudget = Number(sh.getRange('K3').getValue()) || 0;
+    else if (j3 === '총 예산') prevBudget = Number(sh.getRange('J4').getValue()) || 0;
+  } catch (x) {}
+  var area = sh.getRange('J1:N20');
+  area.breakApart(); area.clear(); area.clearDataValidations(); area.clearNote();
+  [9,10,11,12,13].forEach(function(cn, k){ sh.setColumnWidth(cn, k === 0 ? 30 : 85); });
+  var L = function(a1, text, bg){ return sh.getRange(a1).merge().setValue(text).setFontWeight('bold').setFontSize(14).setHorizontalAlignment('center').setVerticalAlignment('middle').setBackground(bg).setFontColor('#ffffff'); };
+  var V = function(a1, bg, size){ return sh.getRange(a1).merge().setFontWeight('bold').setFontSize(size).setHorizontalAlignment('center').setVerticalAlignment('middle').setBackground(bg).setNumberFormat('#,##0"원"'); };
+  sh.getRange('J2:N2').merge().setValue('💰 예산 현황').setFontSize(16).setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle').setBackground('#b50005').setFontColor('#ffffff');
+  L('J3:N3', '총 예산 (직접 입력)', '#5c6bc0');
+  V('J4:N5', '#ffffff', 26).setValue(prevBudget).setFontColor('#283593').setNote('총 예산 직접 입력');
+  L('J6:N6', '사용 예산', '#ef6c00');
+  V('J7:N8', '#fff3e0', 26).setFontColor('#e65100')
+    .setFormula('=ARRAYFORMULA(SUM(IF(' + D + '="",0,IF(ISNUMBER(' + G + ')*(' + C + '>0),ROUNDUP(' + G + '/' + C + ',0)*' + D + ',' + D + '))))')
+    .setNote('자동 계산: 품목별 (초기 재고 ÷ 묶음 수량, 올림) × 묶음 가격의 합계. 초기 재고 미입력 시 묶음 1개 가격으로 계산함.');
+  L('J9:N9', '남은 예산', '#2e7d32');
+  V('J10:N11', '#e8f5e9', 30).setFontColor('#1b5e20').setFormula('=J4-J7').setNote('자동 계산: 총 예산 − 사용 예산');
+  // 보조 정보
+  sh.getRange('J13:K13').merge().setValue('총 인원').setFontWeight('bold').setHorizontalAlignment('center').setBackground('#fff3e0');
+  sh.getRange('L13:N13').merge().setFontWeight('bold').setHorizontalAlignment('center').setBackground('#f3f3f3').setNumberFormat('#,##0"명"')
+    .setFormula('=IFERROR(COUNTIFS(INDEX(\'학생\'!$A:$Z,0,MATCH("이름",\'학생\'!$1:$1,0)),"<>",INDEX(\'학생\'!$A:$Z,0,MATCH("학년",\'학생\'!$1:$1,0)),"<>샘플")-1,0)')
+    .setNote('자동 집계: [학생] 탭 학생 수 (샘플 학생 제외)');
+  sh.getRange('J14:K14').merge().setValue('1인당 사용 금액').setFontWeight('bold').setHorizontalAlignment('center').setBackground('#fff3e0');
+  sh.getRange('L14:N14').merge().setFontWeight('bold').setHorizontalAlignment('center').setBackground('#f3f3f3').setNumberFormat('#,##0"원"')
+    .setFormula('=IF(L13>0,J7/L13,"")');
+  [3,6,9].forEach(function(r){ sh.setRowHeight(r, 30); });
+  [4,5,7,8,10,11].forEach(function(r){ sh.setRowHeight(r, 30); });
+  sh.getRange('J2:N11').setBorder(true,true,true,true,false,false,'#5c2b10',SpreadsheetApp.BorderStyle.SOLID_THICK);
+  ['J3:N5','J6:N8','J9:N11'].forEach(function(a){ sh.getRange(a).setBorder(true,true,true,true,false,false,'#5c2b10',SpreadsheetApp.BorderStyle.SOLID_MEDIUM); });
+  sh.getRange('J13:N14').setBorder(true,true,true,true,true,true,'#bdbdbd',SpreadsheetApp.BorderStyle.SOLID);
   sh.setConditionalFormatRules([
-    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$K$6<0').setBackground('#ffcdd2').setFontColor('#b50005').setRanges([sh.getRange('K6')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=AND($K$3>0,$K$6>=0,$K$6<=$K$3*0.1)').setBackground('#ffe0b2').setFontColor('#e65100').setRanges([sh.getRange('K6')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$J$10<0').setBackground('#ffcdd2').setFontColor('#b50005').setRanges([sh.getRange('J10:N11')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=AND($J$4>0,$J$10>=0,$J$10<=$J$4*0.1)').setBackground('#ffe0b2').setFontColor('#e65100').setRanges([sh.getRange('J10:N11')]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$H' + first + '="없음"').setFontColor('#bbbbbb').setRanges([sh.getRange(first,8,ROWS,1)]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=AND(ISNUMBER($H' + first + '),$H' + first + '<=10)').setBackground('#ffd6d3').setFontColor('#b50005').setRanges([sh.getRange(first,8,ROWS,1)]).build()
   ]);
