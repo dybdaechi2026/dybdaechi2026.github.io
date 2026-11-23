@@ -22,30 +22,21 @@ var SEED = {
     ['ticket_box','참가권','랜덤박스 참가권',1000,100,3,'ticket_box','Y'],
     ['ticket_roul','참가권','룰렛 게임 참가권',1000,100,3,'ticket_roul','Y'],
     ['ticket_rps','참가권','선생님과 가위바위보 참가권',500,100,1,'ticket_rps','Y','선생님과 가위바위보를 해서 이기면 특별 간식 제공!'],
-    ['c1','쿠폰','단어커트 +5',2500,100,1,'c1','Y'],
-    ['c2','쿠폰','구두 면제권',3000,100,1,'c2','Y'],
-    ['c3','쿠폰','온라인 숙제 면제권',3500,100,1,'c3','Y'],
-    ['c4','쿠폰','한과목 숙제 면제권',4000,100,1,'c4','Y'],
-    ['c5','쿠폰','재시험 면제권',4500,100,1,'c5','Y'],
-    ['c6','쿠폰','전체 숙제 면제권',5000,100,1,'c6','Y'],
-    ['damla','간식','다믈라 젤리',500,100,'','damla','Y'],
-    ['jam_straw','간식','재미스 딸기쿠키',2000,100,'','jam_straw','Y'],
-    ['jam_apple','간식','재미스 사과쿠키',2000,100,'','jam_apple','Y'],
-    ['nemo','간식','네모스낵',3000,100,'','nemo','Y'],
-    ['apple_juice','간식','과수원 사과주스',3000,100,'','apple_juice','Y'],
-    ['potato','간식','감자알칩',5000,100,'','potato','Y'],
-    ['chocochip','간식','초코칩 미니',5000,100,'','chocochip','Y'],
-    ['lollipop','간식','크리스마스 젤리 롤리팝',8000,100,'','lollipop','Y'],
-    ['hotpack','문구','핫팩',2500,100,'','hotpack','Y'],
-    ['pen','문구','볼펜',2500,100,'','pen','Y'],
-    ['note','문구','귀여운 노트',3000,100,'','note','Y'],
-    ['highlighter','문구','형광펜',3000,100,'','highlighter','Y'],
-    ['pencil','문구','크리스마스 연필',3000,100,'','pencil','Y'],
-    ['pouch','문구','수정테이프',4500,100,'','pouch','Y'],
-    ['keyring','문구','크리스마스 키링',4500,100,'','keyring','Y'],
-    ['santa_set','문구','산타 문구 세트',5000,100,'','santa_set','Y'],
-    ['ring','문구','크리스마스 불빛반지',5000,100,'','ring','Y'],
-    ['charpen','문구','크리스마스 4색 볼펜',5000,100,'','charpen','Y']
+    ['cp_word','쿠폰','단어커트 +5',2500,100,1,'cp_word','Y',''],
+    ['cp_oral','쿠폰','구두 면제권',3000,100,1,'cp_oral','Y',''],
+    ['cp_hw','쿠폰','한과목 숙제 면제권',4000,100,1,'cp_hw','Y',''],
+    ['cp_retest','쿠폰','재시험 면제권',4500,100,1,'cp_retest','Y',''],
+    ['snack_a','간식','랜덤 사탕 or 젤리',500,100,'','snack_a','Y','사탕 또는 젤리 중 하나를 랜덤으로 받아요!'],
+    ['snack_b','간식','추억의 옛날과자 (짭짤)',1500,100,'','snack_b','Y','짭짤한 옛날과자 중 하나를 랜덤으로 받아요!'],
+    ['snack_c','간식','추억의 옛날과자 (달콤)',1500,100,'','snack_c','Y','달콤한 옛날과자 중 하나를 랜덤으로 받아요!'],
+    ['charpen','문구','크리스마스 4색 볼펜',5000,100,'','charpen','Y',''],
+    ['pencil_rand','문구','랜덤 연필',3000,100,'','pencil_rand','Y','크리스마스 연필 또는 DYB 연필 중 하나를 랜덤으로 받아요!'],
+    ['highlighter','문구','형광펜',3000,100,'','highlighter','Y',''],
+    ['pouch','문구','수정테이프',4500,100,'','pouch','Y',''],
+    ['pen','문구','볼펜',2500,100,'','pen','Y',''],
+    ['ring','굿즈','크리스마스 불빛 반지',5000,100,'','ring','Y',''],
+    ['squishy','굿즈','크리스마스 스쿼시',4000,100,'','squishy','Y',''],
+    ['eraser_gacha','굿즈','랜덤 지우개 뽑기',3000,100,'','eraser_gacha','Y','치이카와 또는 짱구 지우개 중 하나를 랜덤으로 뽑아요!']
   ],
   users: [
     ['김민준','1234',10000,'샘플',''],['이서연','1234',10000,'샘플',''],['박지호','1234',10000,'샘플',''],['최하은','1234',10000,'샘플',''],['정도윤','1234',10000,'샘플',''],
@@ -53,16 +44,15 @@ var SEED = {
   ],
   box: [
     ['1등','배달의민족 3만원권','baemin',1,1,1],
-    ['2등','크리스마스 젤리 롤리팝','lollipop',4,100,100],
-    ['2등','크리스마스 불빛반지','ring',5,100,100],
-    ['3등','초코칩 미니','chocochip',15,100,100],
-    ['3등','크리스마스 연필','pencil',15,100,100],
-    ['3등','재미스 딸기쿠키','jam_straw',20,100,100],
-    ['4등','다믈라 젤리','damla',40,100,100]
+    ['2등','크리스마스 불빛 반지','ring',5,100,100],
+    ['2등','크리스마스 스쿼시','squishy',5,100,100],
+    ['3등','랜덤 지우개 뽑기','eraser_gacha',15,100,100],
+    ['3등','크리스마스 4색 볼펜','charpen',15,100,100],
+    ['4등','랜덤 사탕 or 젤리','snack_a',59,100,100]
   ],
   roul: [
-    [1,'감자알칩','potato',100],[2,'다믈라 젤리','damla',100],[3,'크리스마스 연필','pencil',100],
-    [4,'크리스마스 불빛반지','ring',100],[5,'초코칩 미니','chocochip',100],[6,'단어커트 +5','c1',100]
+    [1,'랜덤 사탕 or 젤리','snack_a',100],[2,'추억의 옛날과자 (짭짤)','snack_b',100],[3,'랜덤 연필','pencil_rand',100],
+    [4,'추억의 옛날과자 (달콤)','snack_c',100],[5,'형광펜','highlighter',100],[6,'단어커트 +5','cp_word',100]
   ]
 };
 
@@ -580,7 +570,7 @@ function onOpen() {
     .addItem('명단 → 학생 탭 반영하기 (남은 포인트 새로고침)', '명단반영')
     .addItem('재고 다시 계산하기', '재고반영')
     .addItem('물품 구매 탭 만들기/정리하기', '물품구매시트')
-    .addItem('물품 구매 목록 → 사이트 물품 맞추기', '물품동기화')
+    .addItem('★ 새 물품 목록 적용 (물품·물품 구매·경품)', '새물품목록적용')
     .addSeparator()
     .addItem('지금 탭: 이름순 정렬 (가나다)', '이름순정렬')
     .addItem('지금 탭: 선생님 → 이름순 정렬 (명단·편지)', '담임순정렬')
@@ -608,7 +598,7 @@ function 꾸미기() {
   명단반영();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var NOTES = {
-    items: {'ID':'사이트가 물건을 구분하는 이름표예요. 이미 팔린 물건은 바꾸지 마세요!','카테고리':'참가권 / 쿠폰 / 간식 / 문구 중 하나','설명':'적어 두면 사이트 물건 이름 옆에 ? 버튼이 생기고, 누르면 이 설명이 보여요','초기재고':'처음 준비한 전체 수량 (직접 입력)','현재고':'자동: 초기재고 − 지금까지 팔린 수량','당일판매수량':'오늘 팔 수량 (직접 입력). 비워 두면 현재고만큼 팔아요','당일재고':'자동: 당일판매수량 − 오늘 팔린 수량. 사이트에는 이 숫자로 남은 정도가 보여요','이름':'사이트에 보이는 물건 이름','가격':'숫자만 (예: 3000)','1인최대':'한 사람이 살 수 있는 최대 개수. 비워 두면 제한 없음','이미지':'사진 파일 이름 (보통 ID와 같아요)','판매':'Y = 판매 / N = 사이트에서 숨기기'},
+    items: {'ID':'사이트가 물건을 구분하는 이름표예요. 이미 팔린 물건은 바꾸지 마세요!','카테고리':'참가권 / 쿠폰 / 간식 / 문구 / 굿즈 중 하나','설명':'적어 두면 사이트 물건 이름 옆에 ? 버튼이 생기고, 누르면 이 설명이 보여요','초기재고':'처음 준비한 전체 수량 (직접 입력)','현재고':'자동: 초기재고 − 지금까지 팔린 수량','당일판매수량':'오늘 팔 수량 (직접 입력). 비워 두면 현재고만큼 팔아요','당일재고':'자동: 당일판매수량 − 오늘 팔린 수량. 사이트에는 이 숫자로 남은 정도가 보여요','이름':'사이트에 보이는 물건 이름','가격':'숫자만 (예: 3000)','1인최대':'한 사람이 살 수 있는 최대 개수. 비워 두면 제한 없음','이미지':'사진 파일 이름 (보통 ID와 같아요)','판매':'Y = 판매 / N = 사이트에서 숨기기'},
     users: {'이름':'학생이 입장할 때 쓰는 이름. 같은 이름 두 명은 안 돼요!','비밀번호':'초대장 번호','포인트':'남은 포인트. 주문하면 자동으로 줄어요'},
     box:   {'등급':'1등, 2등 …','가중치':'숫자가 클수록 잘 나와요 (확률)','남은수량':'0이 되면 더 이상 안 나와요'},
     roul:  {'칸':'룰렛 칸 번호 (순서)','남은수량':'0이 되면 회색 칸이 되고 안 나와요'},
@@ -669,7 +659,7 @@ function 꾸미기() {
     });
     if (k === 'items') {
       var yn = body('판매'); if (yn) yn.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['Y','N'], true).setAllowInvalid(false).build());
-      var cat = body('카테고리'); if (cat) cat.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['참가권','쿠폰','간식','문구'], true).setAllowInvalid(true).build());
+      var cat = body('카테고리'); if (cat) cat.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['참가권','쿠폰','간식','문구','굿즈','기타'], true).setAllowInvalid(true).build());
     }
     if (k === 'comments') {
       var stc = body('상태'); if (stc) stc.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['','숨김','자동삭제'], true).setAllowInvalid(true).build());
@@ -816,7 +806,7 @@ function 물품구매시트() {
   var fF = [], hF = [];
   for (var r = first; r <= last; r++) {
     fF.push(['=IF(OR($D' + r + '="",$E' + r + '=""),"",$D' + r + '*$E' + r + ')']);
-    hF.push(['=IF($A' + r + '="","",IFERROR(INDEX(\'물품\'!$A:$Z, MATCH($A' + r + ', INDEX(\'물품\'!$A:$Z,0,MATCH("이름",\'물품\'!$1:$1,0)),0), MATCH("현재고",\'물품\'!$1:$1,0)),"없음"))']);
+    hF.push(['=IF($A' + r + '="","",IFERROR(INDEX(\'물품\'!$A:$Z, MATCH($A' + r + ', INDEX(\'물품\'!$A:$Z,0,MATCH("이름",\'물품\'!$1:$1,0)),0), MATCH("현재고",\'물품\'!$1:$1,0)),IFERROR(INDEX(\'물품\'!$A:$Z, MATCH(SWITCH($B' + r + ',"사탕/젤리","랜덤 사탕 or 젤리","짭짤과자 A","추억의 옛날과자 (짭짤)","짭짤과자 B","추억의 옛날과자 (짭짤)","달콤과자 A","추억의 옛날과자 (달콤)","달콤과자 B","추억의 옛날과자 (달콤)","랜덤 연필","랜덤 연필","랜덤 지우개","랜덤 지우개 뽑기",""), INDEX(\'물품\'!$A:$Z,0,MATCH("이름",\'물품\'!$1:$1,0)),0), MATCH("현재고",\'물품\'!$1:$1,0)),"없음")))']);
   }
   sh.getRange(first,6,ROWS,1).setFormulas(fF);
   sh.getRange(first,8,ROWS,1).setFormulas(hF);
@@ -837,7 +827,7 @@ function 물품구매시트() {
 
   sh.getRange(first,1,ROWS,10).clearDataValidations();
   sh.getRange(first,2,ROWS,1).setDataValidation(SpreadsheetApp.newDataValidation()
-    .requireValueInList(['간식','문구','면제권','기타'], true).setAllowInvalid(false).build());
+    .requireValueInList(BUY_CATS, true).setAllowInvalid(true).build());
   var it = ss.getSheetByName(TAB_NAMES.items);
   if (it) {
     var ih = it.getRange(1,1,1,it.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
@@ -857,7 +847,7 @@ function 물품구매시트() {
   sh.getRange(3,5).setNote('실제 구매한 개수 직접 입력');
   sh.getRange(3,6).setNote('자동 계산: 개별 가격 × 구매량. 사용 예산은 이 칸의 합계임');
   sh.getRange(3,7).setNote('사이트 판매 시작 수량. 면제권은 미리 재단한 매수 입력');
-  sh.getRange(3,8).setNote('자동 연동: [물품] 탭의 현재고 (판매 시 차감됨). 사이트 미판매 물품은 "없음"으로 표시됨');
+  sh.getRange(3,8).setNote('자동 연동: [물품] 탭의 현재고 (판매 시 차감됨). 랜덤 지급 묶음(사탕/젤리·짭짤/달콤과자·랜덤 연필·랜덤 지우개)은 사이트 판매 물품의 공통 재고로 표시됨. 사이트 미판매 물품은 "없음"');
   sh.getRange(3,9).setNote('구매처 주소 입력 (클릭 시 바로 열림)');
   sh.getRange(3,10).setNote('Y = 사이트 마켓에서 판매 / N = 사이트 미판매 (경품·현장 지급용). [물품 구매 목록 → 사이트 물품 맞추기] 실행 시 반영됨');
 
@@ -899,65 +889,73 @@ function 물품구매시트() {
   SpreadsheetApp.flush();
 }
 
-/* ===== [물품 구매] 목록 → 사이트 [물품] 탭 맞추기 (메뉴에서 실행) ===== */
-var BUY_CAT_TO_ITEM = {'간식':'간식','문구':'문구','면제권':'쿠폰','기타':'기타'};
-function 물품동기화() {
+/* ===== 2026 새 물품 목록 한 번에 적용 (물품 · 물품 구매 · 랜덤박스 · 룰렛) ===== */
+var BUY_CATS = ['사탕/젤리','짭짤과자 A','짭짤과자 B','달콤과자 A','달콤과자 B','랜덤 연필','랜덤 지우개','문구','면제권','굿즈','기타'];
+// 물품 구매 카테고리 → 사이트 판매 물품 이름 (랜덤 지급 묶음)
+var BUY_POOL = {'사탕/젤리':'랜덤 사탕 or 젤리','짭짤과자 A':'추억의 옛날과자 (짭짤)','짭짤과자 B':'추억의 옛날과자 (짭짤)',
+  '달콤과자 A':'추억의 옛날과자 (달콤)','달콤과자 B':'추억의 옛날과자 (달콤)','랜덤 연필':'랜덤 연필','랜덤 지우개':'랜덤 지우개 뽑기'};
+var BUY_SEED = [
+  ['단어커트 +5','면제권'],['구두 면제권','면제권'],['한과목 숙제 면제권','면제권'],['재시험 면제권','면제권'],
+  ['다믈라 젤리','사탕/젤리'],['젤리 (미정)','사탕/젤리'],
+  ['과자 미정','짭짤과자 A'],['과자 미정','짭짤과자 B'],['과자 미정','달콤과자 A'],['과자 미정','달콤과자 B'],
+  ['크리스마스 4색 볼펜','문구'],['크리스마스 연필','랜덤 연필'],['DYB 연필','랜덤 연필'],['형광펜','문구'],['수정테이프','문구'],['볼펜','문구'],
+  ['크리스마스 불빛 반지','굿즈'],['크리스마스 스쿼시','굿즈'],['치이카와 지우개','랜덤 지우개'],['짱구 지우개','랜덤 지우개']
+];
+function 새물품목록적용() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), ui = null;
   try { ui = SpreadsheetApp.getUi(); } catch (x) {}
-  var buy = ss.getSheetByName(BUY_TAB), it = ss.getSheetByName(TAB_NAMES.items);
-  if (!buy || !it) { if (ui) ui.alert('[물품 구매] 또는 [물품] 탭이 없음'); return; }
-  var bl = buy.getLastRow(); if (bl < 4) { if (ui) ui.alert('[물품 구매] 탭에 입력된 물품이 없음'); return; }
-  var bh = buy.getRange(3,1,1,BUY_H.length).getValues()[0].map(function(x){ return String(x).trim(); });
-  var bv = buy.getRange(4,1,bl-3,BUY_H.length).getValues();
-  var want = {}, order = [];
-  bv.forEach(function(r){
-    var nm = String(r[bh.indexOf('물품')]).trim(); if (!nm) return;
-    if (bh.indexOf('판매 여부') >= 0 && String(r[bh.indexOf('판매 여부')]).trim().toUpperCase() === 'N') return;   // 사이트 미판매
-    var cat = BUY_CAT_TO_ITEM[String(r[bh.indexOf('카테고리')]).trim()] || '기타';
-    var init = r[bh.indexOf('초기 재고')];
-    if (!want[nm]) order.push(nm);
-    want[nm] = { cat: cat, init: (init === '' || isNaN(Number(init))) ? null : Number(init) };
-  });
+  if (ui && ui.alert('새 물품 목록 적용',
+      '[물품] · [물품 구매] · [랜덤박스] · [룰렛] 탭의 물품 목록을 새 목록으로 교체함.\n' +
+      '(게임 참가권 3종은 유지 · 기존 탭은 백업 탭으로 복사됨 · 물품 구매에 적어 둔 가격·수량·링크는 같은 이름이면 유지됨)\n\n진행하시겠습니까?',
+      ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
+  setup();
+  var stamp = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MMdd_HHmm');
+  var bk = function(name){ var sh = ss.getSheetByName(name); if (sh && sh.getLastRow() > 0) sh.copyTo(ss).setName(name + '_백업_' + stamp); return sh; };
+
+  // 1) 물품 탭
+  var it = bk(TAB_NAMES.items);
   var ih = it.getRange(1,1,1,it.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
-  var c = function(n){ return ih.indexOf(n); };
-  var iv = it.getLastRow() > 1 ? it.getRange(2,1,it.getLastRow()-1,ih.length).getValues() : [];
-  var del = [], have = {}, ids = {};
-  iv.forEach(function(r){ ids[String(r[c('ID')]).trim()] = true; });
-  iv.forEach(function(r, i){
-    var id = String(r[c('ID')]).trim(), nm = String(r[c('이름')]).trim(), cat = String(r[c('카테고리')]).trim();
-    if (!id && !nm) return;
-    if (cat === '참가권') return;                     // 게임 참가권은 그대로 둠
-    if (!want[nm]) { del.push({ row: i + 2, name: nm }); return; }
-    have[nm] = i + 2;
+  var oldRows = it.getLastRow() > 1 ? it.getRange(2,1,it.getLastRow()-1,ih.length).getValues() : [];
+  var keep = {};   // 참가권은 선생님이 바꾼 값 유지
+  oldRows.forEach(function(r){ var id = String(r[ih.indexOf('ID')]).trim(); if (id.indexOf('ticket_') === 0) keep[id] = r; });
+  var seed = E_seedItems();
+  var rows = seed.map(function(sr){
+    var o = {}; HEADERS.items.forEach(function(h,k){ o[h] = sr[k]; });
+    if (keep[o['ID']]) return keep[o['ID']];
+    return ih.map(function(h){ return o[h] === undefined ? '' : o[h]; });
   });
-  var add = order.filter(function(nm){ return !have[nm]; });
-  if (ui) {
-    var msg = '[물품 구매] 목록 기준으로 사이트 [물품] 탭을 맞춤.\n\n' +
-      '• 삭제 ' + del.length + '개: ' + (del.map(function(d){ return d.name; }).join(', ') || '없음') + '\n' +
-      '• 추가 ' + add.length + '개: ' + (add.join(', ') || '없음') + '\n' +
-      '• 카테고리·초기재고 갱신: 나머지 일치 품목\n\n' +
-      '실행 전 [물품] 탭은 백업 탭으로 복사됨. 진행하시겠습니까?';
-    if (ui.alert('물품 목록 맞추기', msg, ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
-  }
-  it.copyTo(ss).setName('물품_백업_' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'MMdd_HHmm'));
-  // 갱신
-  Object.keys(have).forEach(function(nm){
-    var row = have[nm], w = want[nm];
-    it.getRange(row, c('카테고리') + 1).setValue(w.cat);
-    if (w.init !== null && c('초기재고') >= 0) it.getRange(row, c('초기재고') + 1).setValue(w.init);
+  if (oldRows.length) it.getRange(2,1,oldRows.length,ih.length).clearContent();
+  if (it.getMaxRows() > rows.length + 1 && oldRows.length > rows.length) it.getRange(rows.length+2,1,oldRows.length-rows.length,ih.length).setBackground(null);
+  it.getRange(2,1,rows.length,ih.length).setValues(rows).setBackground(null);
+
+  // 2) 랜덤박스 · 룰렛 탭
+  [['box', SEED.box], ['roul', SEED.roul]].forEach(function(p){
+    var sh = bk(TAB_NAMES[p[0]]), h = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
+    if (sh.getLastRow() > 1) sh.getRange(2,1,sh.getLastRow()-1,h.length).clearContent();
+    var rr = p[1].map(function(r){ var o = {}; HEADERS[p[0]].forEach(function(k,i){ o[k] = r[i]; }); return h.map(function(k){ return o[k] === undefined ? '' : o[k]; }); });
+    sh.getRange(2,1,rr.length,h.length).setValues(rr);
   });
-  // 삭제 (아래 줄부터)
-  del.sort(function(a,b){ return b.row - a.row; }).forEach(function(d){ it.deleteRow(d.row); });
-  // 추가: 가격(포인트)은 비워 둠 → 선생님이 입력하면 판매 시작
-  add.forEach(function(nm){
-    var id; do { id = 'p' + ('000' + Math.floor(Math.random() * 10000)).slice(-4); } while (ids[id]); ids[id] = true;
-    var w = want[nm], row = ih.map(function(h){
-      return ({'ID':id,'카테고리':w.cat,'이름':nm,'가격':'','초기재고':w.init === null ? 0 : w.init,'1인최대':'','이미지':'','판매':'Y','설명':''})[h];
-    }).map(function(v){ return v === undefined ? '' : v; });
-    it.appendRow(row);
-    it.getRange(it.getLastRow(), 1, 1, ih.length).setBackground('#fff3b0');
-    if (c('가격') >= 0) it.getRange(it.getLastRow(), c('가격') + 1).setNote('가격(포인트) 입력 필요. 입력 전에는 사이트에 "곧 판매 시작"으로 표시됨');
+
+  // 3) 물품 구매 탭
+  var buy = ss.getSheetByName(BUY_TAB);
+  if (!buy || String(buy.getRange(3,1).getValue()).trim() !== '물품') { 물품구매시트(); buy = ss.getSheetByName(BUY_TAB); }
+  else bk(BUY_TAB);
+  var first = 4, bh = buy.getRange(3,1,1,BUY_H.length).getValues()[0].map(function(x){ return String(x).trim(); });
+  var prev = {}, used = {};
+  if (buy.getLastRow() >= first) buy.getRange(first,1,buy.getLastRow()-first+1,BUY_H.length).getValues().forEach(function(r){
+    var k = String(r[0]).trim() + '|' + String(r[1]).trim(); if (String(r[0]).trim()) (prev[k] = prev[k] || []).push(r); });
+  var out = BUY_SEED.map(function(sr){
+    var k = sr[0] + '|' + sr[1], old = (prev[k] || []).shift();
+    var get = function(name){ return old ? old[bh.indexOf(name)] : ''; };
+    return [sr[0], sr[1], get('묶음 수량 및 가격'), get('개별 가격'), get('구매량'), null, get('초기 재고'), null, get('구매 링크'), 'Y'];
   });
+  buy.getRange(first,1,120,5).clearContent(); buy.getRange(first,7,120,1).clearContent(); buy.getRange(first,9,120,2).clearContent();
+  out.forEach(function(r, i){
+    buy.getRange(first+i,1,1,5).setValues([r.slice(0,5)]);
+    buy.getRange(first+i,7).setValue(r[6]);
+    buy.getRange(first+i,9,1,2).setValues([[r[8], r[9]]]);
+  });
+  물품구매시트();      // 카테고리 목록·현 재고 수식 다시 적용
   재고반영();
-  if (ui) ui.alert('완료됨', '삭제 ' + del.length + '개, 추가 ' + add.length + '개 처리함.\n새로 추가된 물품(노란 줄)은 [가격] 칸에 포인트 가격 입력 필요함.\n이미지는 사이트에서 임시 그림으로 표시됨.', ui.ButtonSet.OK);
+  if (ui) ui.alert('완료됨', '새 물품 목록 적용 완료.\n• 사이트 물품 ' + rows.length + '개 (참가권 포함)\n• 물품 구매 ' + out.length + '줄\n• 랜덤박스·룰렛 경품 교체\n\n가격(포인트)·경품 확률은 [물품]·[랜덤박스] 탭에서 확인 바람.', ui.ButtonSet.OK);
 }

@@ -767,12 +767,10 @@ function mockInit(){
   const obj=(h,r)=>{const o={};h.forEach((k,i)=>o[k]=r[i]);return o};
   mockDB={today:nowStr().slice(0,5),items:E_seedItems().map(r=>obj(HEADERS.items,r)),users:SEED.users.map(r=>obj(HEADERS.users,r)),
     box:SEED.box.map(r=>obj(HEADERS.box,r)),roul:SEED.roul.map(r=>obj(HEADERS.roul,r)),orders:[],wins:[],letters:[],comments:[],banned:[]};
-  [['potato',6],['ring',4],['damla',9],['pencil',3]].forEach(([id,q],k)=>mockDB.orders.push({'시간':'12/17 09:5'+k+':00','주문번호':'D1'+k,'이름':'샘플','상품ID':id,'상품명':id,'수량':q,'단가':0,'금액':0,'주문후포인트':0}));
+  [['snack_b',6],['ring',4],['snack_a',9],['pencil_rand',3]].forEach(([id,q],k)=>mockDB.orders.push({'시간':'12/17 09:5'+k+':00','주문번호':'D1'+k,'이름':'샘플','상품ID':id,'상품명':id,'수량':q,'단가':0,'금액':0,'주문후포인트':0}));
   mockDB.wins.push({'시간':'12/17 09:40:00','이름':'정도윤','게임':'랜덤박스','등급':'1등','상품명':'배달의민족 3만원권','이미지':'baemin','학생코드':''});
   mockDB.box[0]['남은수량']=0;
-  mockDB.items.find(i=>i['ID']==='nemo')['판매']='N';
-  mockDB.items.push(Object.assign({},mockDB.items.find(i=>i['ID']==='pen'),{'ID':'p0001','이름':'크리스마스 키캡','이미지':'','가격':3000}));
-  mockDB.items.push(Object.assign({},mockDB.items.find(i=>i['ID']==='damla'),{'ID':'p0002','이름':'막대사탕','이미지':'','가격':''}));
+
   mockDB.users.forEach((u,i)=>{u['학년']=['4학년','5학년','6학년'][i%3];u['담임']=['박','최','이'][i%3]+'선생'});
   [['이서연','떡볶이가 진짜 맛있었어요!! 또 해 주세요 🌶️'],['박지호','선생님들 항상 감사합니다 ❤️'],['최하은','룰렛 돌리는 거 너무 재밌어요ㅎㅎ']].forEach(([n,t],k)=>
     mockDB.comments.push({'시간':`12/17 10:1${k}:00`,'학년':'','이름':n,'내용':t,'상태':'','학생코드':''}));
@@ -816,11 +814,12 @@ let me={name:'',pw:''}, S=null, cart={};
 const CATMETA={
   '참가권':{t:'Game Tickets',d:'룰렛·랜덤박스·가위바위보 참가권',ch:'chick',say:'게임 티켓은 3개까지만!'},
   '쿠폰':{t:'Coupons',d:'숙제·시험 면제권 (종류별 1장씩!)',ch:'cat_fish',say:'선생님 허락 받고 사용해줘!'},
-  '간식':{t:'Snack',d:'달콤 바삭 크리스마스 간식',ch:'hamster_magni',say:'냠냠, 뭐 먹을까?'},
+  '간식':{t:'Snack',d:'랜덤으로 골라 주는 크리스마스 간식 (? 를 눌러 봐요)',ch:'hamster_magni',say:'냠냠, 뭐 먹을까?'},
+  '굿즈':{t:'Christmas Goods',d:'반짝반짝 크리스마스 굿즈',ch:'cat',say:'뭐가 나올지 두근두근!'},
   '기타':{t:'Special Gifts',d:'특별한 크리스마스 선물',ch:'whale',say:'이건 뭘까? 궁금하지?'},
   '문구':{t:'Stationery',d:'귀여운 크리스마스 문구',ch:'rabbit_flower',say:'크리스마스 문구 GET!'},
 };
-const CATORDER=['참가권','쿠폰','간식','문구','기타'];
+const CATORDER=['참가권','쿠폰','간식','문구','굿즈','기타'];
 
 function applyState(st){
   S=st;
@@ -847,7 +846,7 @@ function renderShop(){
     const m=CATMETA[c]||{t:c,d:'',ch:'turtle_happy',say:'구경해 봐!'};
     return `<div class="cat"><div class="cat-head"><img class="who" src="img/xmas/${m.ch}.webp" alt="">
       <div class="ribbon-title"><h3>${esc(m.t)}</h3><p>${esc(m.d)}</p></div><div class="bubble hand">${esc(m.say)}</div></div>
-      <div class="grid ${c==='참가권'?'tk3':''}">${list.map(cardHTML).join('')}</div></div>`;
+      <div class="grid ${(c==='참가권'||list.length===3)?'tk3':''}">${list.map(cardHTML).join('')}</div></div>`;
   }).join('');
 }
 function cardHTML(it){
