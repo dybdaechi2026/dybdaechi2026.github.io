@@ -218,13 +218,18 @@ section.view.on{display:block}
 .tag{display:inline-block;position:relative;background:var(--gold);border:2.5px solid var(--line);border-radius:8px 14px 14px 8px;padding:2px 14px 0 20px;font-size:24px;margin-top:4px}
 .tag::before{content:"";position:absolute;left:5px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:#fff;border:2px solid var(--line)}
 .poolbtn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;margin-left:6px;border-radius:50%;background:#fff3b0;border:2.5px solid var(--line);box-shadow:0 3px 0 var(--line);vertical-align:middle;flex:none;padding:0;overflow:hidden;animation:wiggle 1.6s infinite}
-.poolbtn img{width:36px;height:36px;object-fit:contain;margin-top:4px}
+.poolbtn{font-size:22px;background:#fff3b0}
 .poolbtn:active{transform:translateY(3px);box-shadow:none}
 .pool-top{display:flex;align-items:flex-end;justify-content:center;gap:4px;margin-top:-6px}
 .pool-ch{width:120px;animation:bob 2.2s infinite}
 .pool-say{position:relative;white-space:nowrap;background:#fff;border:3px solid var(--line);border-radius:18px;padding:8px 14px 6px;font-size:22px;margin-bottom:60px}
 .pool-say::before{content:"";position:absolute;left:-13px;bottom:12px;border:8px solid transparent;border-right:12px solid var(--line)}
 .pool-say::after{content:"";position:absolute;left:-8px;bottom:14px;border:6px solid transparent;border-right:9px solid #fff}
+.pool-cards{display:flex;align-items:center;justify-content:center;gap:10px;margin:14px 0 10px;flex-wrap:wrap}
+.pool-cards .pc{background:#fff;border:3px solid var(--line);border-radius:20px;box-shadow:0 4px 0 var(--line);padding:10px 12px 8px;width:140px;text-align:center}
+.pool-cards .pc img{width:96px;height:96px;object-fit:contain;margin:0 auto 4px}
+.pool-cards .pc b{font-weight:400;font-size:18px;word-break:keep-all}
+.pool-cards .or{font-size:24px;color:var(--red)}
 .pool-list{list-style:none;margin:12px auto 8px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:420px}
 .pool-list li{display:flex;align-items:center;gap:6px;background:#fff;border:2.5px solid var(--line);border-radius:999px;padding:5px 14px 3px 5px;font-size:19px;box-shadow:0 3px 0 var(--line)}
 .pool-list .pn{width:26px;height:26px;border-radius:50%;background:var(--gold);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px}
@@ -826,7 +831,7 @@ let me={name:'',pw:''}, S=null, cart={};
 const CATMETA={
   '참가권':{t:'Game Tickets',d:'룰렛·랜덤박스·가위바위보 참가권',ch:'chick',say:'게임 티켓은 3개까지만!'},
   '쿠폰':{t:'Coupons',d:'숙제·시험 면제권 (종류별 1장씩!)',ch:'cat_fish',say:'선생님 허락 받고 사용해줘!'},
-  '간식':{t:'Snack',d:'랜덤으로 골라 주는 간식 (돋보기 캐릭터를 눌러 봐요 🔍)',ch:'hamster_magni',say:'냠냠, 뭐 먹을까?'},
+  '간식':{t:'Snack',d:'돋보기를 눌러서 뭐가 들었는지 보세요! 🔍',ch:'hamster_magni',say:'돋보기를 눌러서 뭐가 들었는지 보세요!'},
   '굿즈':{t:'Christmas Goods',d:'반짝반짝 크리스마스 굿즈',ch:'cat',say:'뭐가 나올지 두근두근!'},
   '기타':{t:'Special Gifts',d:'특별한 크리스마스 선물',ch:'whale',say:'이건 뭘까? 궁금하지?'},
   '문구':{t:'Stationery',d:'귀여운 크리스마스 문구',ch:'rabbit_flower',say:'크리스마스 문구 GET!'},
@@ -866,21 +871,23 @@ function cardHTML(it){
   const limTxt=it.limit>0?`<span class="limit-badge">${it.mine>=it.limit?'구매 완료 ✓':`1인 ${it.limit}개${it.limit>1?` · ${it.mine}/${it.limit}`:''}`}</span>`:'';
   return `<div class="card ${sold?'is-sold':''} ${prep?'is-prep':''} ${hot?'is-hot':''}">${hot?'<span class="hot"><svg viewBox="0 0 60 72"><path d="M30 2C34 18 50 24 52 44C54 62 42 70 30 70C16 70 6 60 8 44C9 34 16 30 18 20C24 28 24 34 28 36C30 24 26 14 30 2Z" fill="#ff6a2b" stroke="#2b1a14" stroke-width="3.5" stroke-linejoin="round"/><path d="M30 30C33 40 42 44 42 54C42 63 36 66 30 66C23 66 18 61 19 53C20 47 24 46 26 40C28 44 29 46 30 46Z" fill="#ffd23d"/></svg><b>인기!</b></span>':''}${limTxt}
     <div class="pic"><img src="${imgSrc(it.img,it.name,it.cat)}" data-ph="${phImg(it.name,it.cat)}" alt="${esc(it.name)}" onerror="${IMG_FALLBACK}"></div>
-    <div class="name">${esc(it.name)}${(S.pools&&S.pools[it.name]&&S.pools[it.name].length)?`<button class="poolbtn" data-pool="${esc(it.name)}" aria-label="무엇이 들어있는지 보기"><img src="img/xmas/hamster_magni.webp" alt=""></button>`:it.desc?`<button class="info" data-desc="${esc(it.desc)}" data-nm="${esc(it.name)}" aria-label="설명 보기">?</button>`:''}</div>
+    <div class="name">${esc(it.name)}${((S.pools&&S.pools[it.name]&&S.pools[it.name].length)||SAMPLE_POOL[it.name])?`<button class="poolbtn" data-pool="${esc(it.name)}" aria-label="무엇이 들어있는지 보기">🔍</button>`:it.desc?`<button class="info" data-desc="${esc(it.desc)}" data-nm="${esc(it.name)}" aria-label="설명 보기">?</button>`:''}</div>
     ${prep?'':`<span class="tag">${won(it.price)}원</span>`}
     <div class="stock">${prep?'<span class="preptxt">곧 판매 시작! ⏳</span>':sold?'<span class="soldtxt">선물이 매진되었어요.</span>':stockTag({left:it.stock,init:it.base||it.stock})}</div>
     ${(sold||prep)?'':`<div class="stepper"><button data-id="${it.id}" data-d="-1" ${q<=0?'disabled':''}>−</button><span class="q">${q}</span><button class="plus" data-id="${it.id}" data-d="1" ${q>=max?'disabled':''}>+</button></div>`}
   </div>`;
 }
 document.addEventListener('click',e=>{
-  const pb=e.target.closest('.poolbtn'); if(pb){ const nm=pb.dataset.pool, list=(S.pools||{})[nm]||[], it=S.items.find(i=>i.name===nm)||{};
-    const snack=it.cat==='간식';
+  const pb=e.target.closest('.poolbtn'); if(pb){ const nm=pb.dataset.pool, it=S.items.find(i=>i.name===nm)||{}, snack=it.cat==='간식';
+    let list=((S.pools||{})[nm]||[]).slice(); const samp=SAMPLE_POOL[nm];
+    if(samp && (!list.length || list.every(x=>/미정|과자 [AB]/.test(x)))) list=samp.map(x=>x.n);
+    const pics=list.map((x,i)=>{ const sp=samp&&samp.find(o=>o.n===x); return sp?sp.img:(samp?samp[i%samp.length].img:''); });
     showModal(`<div class="pool-top"><img class="pool-ch" src="img/xmas/hamster_magni.webp" alt=""><div class="pool-say hand">${snack?'무슨 간식이 들어있을까?':'무엇이 들어있을까?'}</div></div>
       <div class="rname" style="font-size:26px;margin-top:4px">${esc(nm)}</div>
-      <ul class="pool-list">${list.map((x,i)=>`<li><span class="pn">${i+1}</span>${esc(x)}</li>`).join('')}</ul>
-      <p class="who" style="font-size:18px;color:#8a6a5a">이 중에서 <b style="color:var(--red)">하나를 랜덤</b>으로 받아요! 🎁</p>
+      <div class="pool-cards">${list.map((x,i)=>`${i?'<span class="or">or</span>':''}<div class="pc">${pics[i]?`<img src="${pics[i]}" alt="">`:''}<b>${esc(x)}</b></div>`).join('')}</div>
+      <p class="who" style="font-size:20px;color:#5a3b2e"><b style="color:var(--red)">${list.map(esc).join('</b>, <b style="color:var(--red)">')}</b> 중에 하나를 받아요! 🎁</p>
       <button class="btn red ok" data-close>두근두근! 확인</button>`); return; }
-  const inf=e.target.closest('.info'); if(inf){ showModal(`<img class="peek" src="img/xmas/whale.webp" alt=""><div class="tada" style="font-size:32px">✌️ ✊ ✋</div>
+  const inf=e.target.closest('.info'); if(inf){ const isRps=/가위바위보/.test(inf.dataset.nm); showModal(`<img class="peek" src="img/xmas/whale.webp" alt=""><div class="tada" style="font-size:32px">${isRps?'✌️ ✊ ✋':'💡 알려 줄게!'}</div>
     <p class="rname" style="font-size:26px;margin-top:8px">${esc(inf.dataset.nm)}</p><p class="who" style="font-size:24px;margin-top:10px;line-height:1.4">${esc(inf.dataset.desc)}</p>
     <button class="btn red ok" data-close>알겠어요!</button>`); return; }
   const b=e.target.closest('.stepper button'); if(!b) return;
@@ -933,6 +940,12 @@ function renderPopular(){
     <div class="pop-row">${P.length?P.map((p,i)=>`<div class="pop r${i+1}"><span class="md">${medal[i]}</span><img src="${imgSrc(p.img)}" alt="" onerror="${IMG_FALLBACK}"><div class="pn">${esc(p.name)}</div><div class="ps">${p.sold}개 팔렸어요!</div></div>`).join('')
       :'<div class="pop-empty">아직 팔린 물건이 없어요. 첫 손님이 되어 볼까요? 🛍️</div>'}</div>`;
 }
+/* 아직 과자가 안 정해진 랜덤 물품의 샘플 구성 */
+const SAMPLE_POOL={
+  '추억의 옛날과자 (짭짤)':[{n:'과자 이름 1',img:'img/items/sample_snack2.webp'},{n:'과자 이름 b',img:'img/items/sample_snack1.webp'}],
+  '추억의 옛날과자 (달콤)':[{n:'과자 이름 1',img:'img/items/sample_snack1.webp'},{n:'과자 이름 b',img:'img/items/sample_snack2.webp'}],
+  '랜덤 사탕 or 젤리':[{n:'과자 이름 1',img:'img/items/sample_snack1.webp'},{n:'과자 이름 b',img:'img/items/sample_snack2.webp'}]
+};
 /* ================= MODAL ================= */
 function showModal(html,rays=false,jackpot=false,extra=''){
   $('mbox').className='mbox'+(jackpot?' jackpot':'')+(extra?' '+extra:''); $('mbox').innerHTML=html;
