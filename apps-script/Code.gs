@@ -921,11 +921,13 @@ var BUY_SEED = [
 ];
 function 새물품목록적용() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), ui = null;
-  try { ui = SpreadsheetApp.getUi(); } catch (x) {}
-  if (ui && ui.alert('새 물품 목록 적용',
+  try { ui = SpreadsheetApp.getUi(); ui.alert; } catch (x) { ui = null; }
+  // Apps Script 편집기에서 실행하면 확인 창을 띄울 수 없어서 바로 진행함
+  var ask = function(){ try { return ui.alert.apply(ui, arguments); } catch (x) { ui = null; return 'YES'; } };
+  if (ui && ask('새 물품 목록 적용',
       '[물품] · [물품 구매] · [랜덤박스] · [룰렛] 탭의 물품 목록을 새 목록으로 교체함.\n' +
       '(게임 참가권 3종은 유지 · 기존 탭은 백업 탭으로 복사됨 · 물품 구매에 적어 둔 가격·수량·링크는 같은 이름이면 유지됨)\n\n진행하시겠습니까?',
-      ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
+      ui.ButtonSet.YES_NO) !== (ui ? ui.Button.YES : 'YES')) return;
   setup();
   var stamp = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MMdd_HHmm');
   var bk = function(name){ var sh = ss.getSheetByName(name); if (sh && sh.getLastRow() > 0) sh.copyTo(ss).setName(name + '_백업_' + stamp); return sh; };
@@ -975,5 +977,6 @@ function 새물품목록적용() {
   });
   물품구매시트();      // 카테고리 목록·현 재고 수식 다시 적용
   재고반영();
-  if (ui) ui.alert('완료됨', '새 물품 목록 적용 완료.\n• 사이트 물품 ' + rows.length + '개 (참가권 포함)\n• 물품 구매 ' + out.length + '줄\n• 랜덤박스·룰렛 경품 교체\n\n가격(포인트)·경품 확률은 [물품]·[랜덤박스] 탭에서 확인 바람.', ui.ButtonSet.OK);
+  Logger.log('새 물품 목록 적용 완료');
+  if (ui) ask('완료됨', '새 물품 목록 적용 완료.\n• 사이트 물품 ' + rows.length + '개 (참가권 포함)\n• 물품 구매 ' + out.length + '줄\n• 랜덤박스·룰렛 경품 교체\n\n가격(포인트)·경품 확률은 [물품]·[랜덤박스] 탭에서 확인 바람.', ui.ButtonSet.OK);
 }
