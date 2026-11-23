@@ -97,6 +97,7 @@ function E_state(db, u){
       var top = db.wins.filter(function(w){ return E_str(w['등급']) === '1등'; }), rest = db.wins.slice(-60).filter(function(w){ return E_str(w['등급']) !== '1등'; });
       return top.reverse().map(m).concat(rest.reverse().map(m)); })(),
     popular: E_popular(db),
+    pools: db.pools || {},
     comments: db.comments.filter(function(c){ var st = E_str(c['상태']); return st !== '숨김' && st !== '자동삭제' && !E_bad(E_str(c['내용']), E_bannedList(db)); })
       .slice(-60).reverse().map(function(c){ return {t:E_str(c['시간']), who:E_who(db,c), text:E_str(c['내용']), mine:E_isMe(c,u)}; }),
     letter: { sent: db.letters.filter(function(l){ return E_isMe(l,u); }).length, max: LETTER_MAX, points: LETTER_POINTS },
@@ -287,6 +288,7 @@ function loadDB_() {
       var o = { _r: i + 2 }; h.forEach(function(name, j){ var v = r[j]; o[name] = (v instanceof Date) ? Utilities.formatDate(v, 'Asia/Seoul', 'MM/dd HH:mm:ss') : v; }); return o;
     }).filter(function(o){ return h.some(function(name){ return name !== '지급완료' && o[name] !== '' && o[name] !== null; }); });
   });
+  try { db.pools = loadPools_(ss); } catch (x) { db.pools = {}; }
   // 랜덤박스 '처음수량'이 비어 있으면 지금 남은수량으로 채워요 (재고 퍼센트 계산용)
   db.box.forEach(function(b){ if (E_str(b['처음수량']) === '' && E_str(b['상품명'])) { b['처음수량'] = E_num(b['남은수량']); var c = db._hdr.box.indexOf('처음수량') + 1; if (c > 0) db._sh.box.getRange(b._r, c).setValue(b['처음수량']); } });
   return db;
@@ -433,6 +435,22 @@ function migrateStock_(sh) {
     var initCol = lc - 2;
     sh.getRange(2, initCol, n, 1).setValues(ids.map(function(r){ return [String(r[0]).trim() ? 100 : '']; }));
   }
+}
+
+/** [물품 구매] 탭에서 랜덤 지급 물품의 구성(무엇이 들어있는지)을 읽어요. */
+function loadPools_(ss) {
+  var sh = ss.getSheetByName(BUY_TAB), out = {};
+  if (!sh || sh.getLastRow() < 4) return out;
+  var h = sh.getRange(3,1,1,Math.max(sh.getLastColumn(),2)).getValues()[0].map(function(x){ return String(x).trim(); });
+  var nc = h.indexOf('물품'), cc = h.indexOf('카테고리'); if (nc < 0 || cc < 0) return out;
+  sh.getRange(4,1,sh.getLastRow()-3,h.length).getValues().forEach(function(r){
+    var nm = String(r[nc]).trim(), cat = String(r[cc]).trim(), target = BUY_POOL[cat];
+    if (!nm || !target) return;
+    var label = (/미정/.test(nm) && /과자/.test(cat)) ? cat : nm;
+    out[target] = out[target] || [];
+    if (out[target].indexOf(label) < 0) out[target].push(label);
+  });
+  return out;
 }
 
 /* ===== 학년 명단 (다른 선생님들이 입력) → 학생 탭 자동 반영 ===== */
