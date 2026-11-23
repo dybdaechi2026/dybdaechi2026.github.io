@@ -754,22 +754,32 @@ function 꾸미기() {
 
 /* ===== [물품 구매] 탭: 선생님이 산 물건과 예산 관리 (사이트와는 연결되지 않아요) ===== */
 var BUY_TAB = '물품 구매';
-var BUY_H = ['물품명','카테고리','묶음 수량','묶음 가격','개별 가격','구매 링크','초기 재고','현 재고'];
+var BUY_H = ['물품','카테고리','묶음 수량 및 가격','개별 가격','구매 링크','초기 재고','현 재고'];
 function 물품구매시트() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(BUY_TAB);
-  var ROWS = 120, first = 4, last = first + ROWS - 1, carry = [];
+  var ROWS = 120, first = 4, last = first + ROWS - 1, carry = [], prevBudget = null;
   if (sh && sh.getLastRow() > 0) {
-    var hdr = sh.getRange(3,1,1,BUY_H.length).getValues()[0].map(function(x){ return String(x).trim(); });
-    if (hdr.join('|') !== BUY_H.join('|')) {
-      // 예전 모양: 백업해 두고, 적어 둔 물건은 새 칸으로 옮겨요
+    // 이전에 적어 둔 총 예산 찾기
+    [['J3','K3','전체 예산'],['J3','J4','총 예산'],['N4','N5','총 예산']].forEach(function(p){
+      try { if (prevBudget === null && String(sh.getRange(p[0]).getValue()).trim() === p[2]) prevBudget = Number(sh.getRange(p[1]).getValue()) || 0; } catch (x) {}
+    });
+    var lc = Math.max(sh.getLastColumn(), 8);
+    var hdr = sh.getRange(3,1,1,lc).getValues()[0].map(function(x){ return String(x).trim(); });
+    if (hdr.slice(0, BUY_H.length).join('|') !== BUY_H.join('|')) {
+      // 예전 모양: 백업해 두고, 적어 둔 물건은 새 칸으로 옮김
       var bk = sh.copyTo(ss); bk.setName(BUY_TAB + '_백업_' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'MMdd_HHmm'));
-      if (hdr[0] === '물품명' && sh.getLastRow() >= first) {
-        var old = sh.getRange(first,1,sh.getLastRow()-first+1,5).getValues();   // 물품명, 카테고리, 개별 가격, 수량, 총 가격
-        old.forEach(function(r){
-          if (String(r[0]).trim() === '') return;
-          var c0 = String(r[1]).trim(), cat = ['간식','문구','면제권'].indexOf(c0) >= 0 ? c0 : (c0 ? '기타' : '');
-          var qty = Number(r[3]) || '', price = Number(r[2]) || '', total = Number(r[4]) || (qty && price ? qty * price : '');
-          carry.push([r[0], cat, qty || 1, total || price, '', '', qty || '']);
+      if (sh.getLastRow() >= first) {
+        var v = sh.getRange(first,1,sh.getLastRow()-first+1,lc).getValues(), h = function(n){ return hdr.indexOf(n); };
+        v.forEach(function(r){
+          var nm = String(r[Math.max(h('물품명'), h('물품'))] || '').trim(); if (!nm) return;
+          var c0 = String(r[h('카테고리')] || '').trim(), cat = ['간식','문구','면제권'].indexOf(c0) >= 0 ? c0 : (c0 ? '기타' : '');
+          var bq = h('묶음 수량') >= 0 ? r[h('묶음 수량')] : '', bp = h('묶음 가격') >= 0 ? r[h('묶음 가격')] : '';
+          var unit = h('개별 가격') >= 0 ? r[h('개별 가격')] : '', qty = h('수량') >= 0 ? r[h('수량')] : '';
+          var bundle = (bq !== '' || bp !== '') ? (bq !== '' ? Number(bq).toLocaleString() + '개' : '') + (bq !== '' && bp !== '' ? ' / ' : '') + (bp !== '' ? Number(bp).toLocaleString() + '원' : '') : '';
+          if (unit === '' && bq && bp) unit = Math.round(Number(bp) / Number(bq));
+          var link = h('구매 링크') >= 0 ? r[h('구매 링크')] : '';
+          var init = h('초기 재고') >= 0 ? r[h('초기 재고')] : qty;
+          carry.push([nm, cat, bundle, unit === '' ? '' : Number(unit), link, init === '' ? '' : Number(init)]);
         });
       }
       var all = sh.getRange(1,1,sh.getMaxRows(),sh.getMaxColumns());
@@ -779,39 +789,43 @@ function 물품구매시트() {
   }
   if (!sh) sh = ss.insertSheet(BUY_TAB);
   if (sh.getMaxRows() < last + 2) sh.insertRowsAfter(sh.getMaxRows(), last + 2 - sh.getMaxRows());
-  if (sh.getMaxColumns() < 14) sh.insertColumnsAfter(sh.getMaxColumns(), 14 - sh.getMaxColumns());
+  if (sh.getMaxColumns() < 19) sh.insertColumnsAfter(sh.getMaxColumns(), 19 - sh.getMaxColumns());
   sh.setTabColor('#ff9800');
 
   sh.getRange('A1').setValue('🛒 물품 구매 · 예산 관리').setFontSize(18).setFontWeight('bold').setFontColor('#b50005');
-  sh.getRange('A2').setValue('흰 칸만 입력함. 개별 가격은 묶음 가격 ÷ 묶음 수량으로 자동 계산되며, 현 재고는 [물품] 탭에서 자동 연동됨 (물품명 일치 시).').setFontColor('#777777').setFontSize(10);
+  sh.getRange('A2').setValue('흰 칸 직접 입력. 현 재고는 [물품] 탭에서 자동 연동됨 (물품명 일치 시). 사용 예산 = 개별 가격 × 초기 재고 합계.').setFontColor('#777777').setFontSize(10);
 
   sh.getRange(3,1,1,BUY_H.length).setValues([BUY_H]).setFontWeight('bold').setFontColor('#ffffff').setHorizontalAlignment('center').setVerticalAlignment('middle');
-  sh.getRange(3,1,1,8).setBackground('#ff9800');
-  sh.getRange(3,5).setBackground('#9e9e9e'); sh.getRange(3,8).setBackground('#9e9e9e');
+  sh.getRange(3,1,1,7).setBackground('#ff9800'); sh.getRange(3,7).setBackground('#9e9e9e');
+  sh.getRange(3,8,1,6).clearContent().clearFormat();
   sh.setRowHeight(3, 32); sh.setFrozenRows(3);
-  [170,80,80,100,90,200,80,80].forEach(function(w,i){ sh.setColumnWidth(i+1, w); });
+  [170,80,150,90,220,80,80].forEach(function(w,i){ sh.setColumnWidth(i+1, w); });
 
-  if (carry.length) sh.getRange(first,1,carry.length,7).setValues(carry);
-
-  var eF = [], hF = [];
-  for (var r = first; r <= last; r++) {
-    eF.push(['=IF(OR($C' + r + '="",$D' + r + '="",$C' + r + '=0),"",ROUND($D' + r + '/$C' + r + ',0))']);
-    hF.push(['=IF($A' + r + '="","",IFERROR(INDEX(\'물품\'!$A:$Z, MATCH($A' + r + ', INDEX(\'물품\'!$A:$Z,0,MATCH("이름",\'물품\'!$1:$1,0)),0), MATCH("현재고",\'물품\'!$1:$1,0)),"없음"))']);
+  // 예전 수식 칸 정리 (함수 없이 직접 입력하도록)
+  var old8 = sh.getRange(first,1,ROWS,8);
+  if (carry.length) { old8.clearContent(); sh.getRange(first,1,carry.length,6).setValues(carry); }
+  else {
+    var fm = sh.getRange(first,3,ROWS,2).getFormulas();
+    fm.forEach(function(row, i){ row.forEach(function(f, j){ if (f) sh.getRange(first+i, 3+j).clearContent(); }); });
   }
-  sh.getRange(first,5,ROWS,1).setFormulas(eF);
-  sh.getRange(first,8,ROWS,1).setFormulas(hF);
+  sh.getRange(first,8,ROWS,1).clearContent().clearFormat().clearDataValidations();
+
+  var gF = [];
+  for (var r = first; r <= last; r++)
+    gF.push(['=IF($A' + r + '="","",IFERROR(INDEX(\'물품\'!$A:$Z, MATCH($A' + r + ', INDEX(\'물품\'!$A:$Z,0,MATCH("이름",\'물품\'!$1:$1,0)),0), MATCH("현재고",\'물품\'!$1:$1,0)),"없음"))']);
+  sh.getRange(first,7,ROWS,1).setFormulas(gF);
 
   sh.getBandings().forEach(function(b){ b.remove(); });
-  sh.getRange(3,1,ROWS+1,8).applyRowBanding(SpreadsheetApp.BandingTheme.ORANGE, true, false).setHeaderRowColor('#ff9800').setFirstRowColor('#ffffff').setSecondRowColor('#fff6e5');
-  sh.getRange(first,1,ROWS,8).setVerticalAlignment('middle');
-  sh.getRange(first,2,ROWS,7).setHorizontalAlignment('center');
-  sh.getRange(first,6,ROWS,1).setHorizontalAlignment('left').setFontColor('#1565c0');
-  sh.getRange(first,3,ROWS,1).setNumberFormat('#,##0"개"');
+  sh.getRange(3,1,ROWS+1,7).applyRowBanding(SpreadsheetApp.BandingTheme.ORANGE, true, false).setHeaderRowColor('#ff9800').setFirstRowColor('#ffffff').setSecondRowColor('#fff6e5');
+  sh.getRange(first,1,ROWS,7).setVerticalAlignment('middle');
+  sh.getRange(first,2,ROWS,6).setHorizontalAlignment('center').setFontColor('#000000').setFontWeight('normal');
+  sh.getRange(first,3,ROWS,1).setNumberFormat('@');
   sh.getRange(first,4,ROWS,1).setNumberFormat('#,##0"원"').setFontWeight('bold');
-  sh.getRange(first,5,ROWS,1).setNumberFormat('#,##0"원"').setBackground('#f3f3f3').setFontColor('#555555');
-  sh.getRange(first,7,ROWS,1).setNumberFormat('#,##0"개"');
-  sh.getRange(first,8,ROWS,1).setNumberFormat('#,##0"개"').setBackground('#f3f3f3').setFontColor('#555555').setFontWeight('bold');
+  sh.getRange(first,5,ROWS,1).setHorizontalAlignment('left').setFontColor('#1565c0').setNumberFormat('@');
+  sh.getRange(first,6,ROWS,1).setNumberFormat('#,##0"개"');
+  sh.getRange(first,7,ROWS,1).setNumberFormat('#,##0"개"').setBackground('#f3f3f3').setFontColor('#555555').setFontWeight('bold');
 
+  sh.getRange(first,1,ROWS,7).clearDataValidations();
   sh.getRange(first,2,ROWS,1).setDataValidation(SpreadsheetApp.newDataValidation()
     .requireValueInList(['간식','문구','면제권','기타'], true).setAllowInvalid(false).build());
   var it = ss.getSheetByName(TAB_NAMES.items);
@@ -823,57 +837,49 @@ function 물품구매시트() {
       .setHelpText('[물품] 탭 이름과 동일하게 입력 시 현 재고 자동 표시됨. 다른 이름도 입력 가능함.').build());
   }
   var num = SpreadsheetApp.newDataValidation().requireNumberGreaterThanOrEqualTo(0).setAllowInvalid(false).setHelpText('숫자만 입력 가능함').build();
-  sh.getRange(first,3,ROWS,2).setDataValidation(num);
-  sh.getRange(first,7,ROWS,1).setDataValidation(num);
+  sh.getRange(first,4,ROWS,1).setDataValidation(num);
+  sh.getRange(first,6,ROWS,1).setDataValidation(num);
+  sh.getRange(3,1,1,8).clearNote();
   sh.getRange(3,1).setNote('[물품] 탭의 "이름"과 동일하게 입력 시 현 재고 자동 연동됨');
-  sh.getRange(3,3).setNote('한 묶음(봉지·박스)당 개수. 면제권은 1장 단위면 1 입력');
-  sh.getRange(3,4).setNote('한 묶음 가격. 면제권 등 자체 제작물은 인쇄·제작비 입력 (없으면 0)');
-  sh.getRange(3,5).setNote('자동 계산: 묶음 가격 ÷ 묶음 수량 (원 단위 반올림)');
-  sh.getRange(3,6).setNote('구매처 주소 입력 (클릭 시 바로 열림)');
-  sh.getRange(3,7).setNote('최초 준비 수량. 면제권은 미리 재단한 매수 입력. 사용 금액 계산에 활용됨 (필요 묶음 수 × 묶음 가격)');
-  sh.getRange(3,8).setNote('자동 연동: [물품] 탭의 현재고 (판매 시 차감됨). 사이트 미판매 물품은 "없음"으로 표시됨');
+  sh.getRange(3,3).setNote('자유 입력 (예: 100개 / 10,000원). 계산에는 쓰이지 않음');
+  sh.getRange(3,4).setNote('1개당 가격 직접 입력. 사용 예산 계산에 쓰임 (개별 가격 × 초기 재고)');
+  sh.getRange(3,5).setNote('구매처 주소 입력 (클릭 시 바로 열림)');
+  sh.getRange(3,6).setNote('최초 준비 수량. 면제권은 미리 재단한 매수 입력');
+  sh.getRange(3,7).setNote('자동 연동: [물품] 탭의 현재고 (판매 시 차감됨). 사이트 미판매 물품은 "없음"으로 표시됨');
 
-  // ---- 오른쪽: 큰 예산 박스 (J~M) ----
-  var C = 'C' + first + ':C' + last, D = 'D' + first + ':D' + last, G = 'G' + first + ':G' + last;
-  // 이전에 적어 둔 예산 금액은 살려 둠
-  var prevBudget = 0;
-  try {
-    var j3 = String(sh.getRange('J3').getValue()).trim();
-    if (j3 === '전체 예산') prevBudget = Number(sh.getRange('K3').getValue()) || 0;
-    else if (j3 === '총 예산') prevBudget = Number(sh.getRange('J4').getValue()) || 0;
-  } catch (x) {}
-  var area = sh.getRange('J1:N20');
+  // ---- 오른쪽: 큰 예산 박스 (N~R, 3행부터) ----
+  var Dr = 'D' + first + ':D' + last, Fr = 'F' + first + ':F' + last;
+  if (prevBudget === null) prevBudget = 0;
+  var area = sh.getRange('I1:S25');
   area.breakApart(); area.clear(); area.clearDataValidations(); area.clearNote();
-  [9,10,11,12,13].forEach(function(cn, k){ sh.setColumnWidth(cn, k === 0 ? 30 : 85); });
+  for (var cn = 8; cn <= 13; cn++) sh.setColumnWidth(cn, 40);
+  for (var cn2 = 14; cn2 <= 18; cn2++) sh.setColumnWidth(cn2, 85);
   var L = function(a1, text, bg){ return sh.getRange(a1).merge().setValue(text).setFontWeight('bold').setFontSize(14).setHorizontalAlignment('center').setVerticalAlignment('middle').setBackground(bg).setFontColor('#ffffff'); };
   var V = function(a1, bg, size){ return sh.getRange(a1).merge().setFontWeight('bold').setFontSize(size).setHorizontalAlignment('center').setVerticalAlignment('middle').setBackground(bg).setNumberFormat('#,##0"원"'); };
-  sh.getRange('J2:N2').merge().setValue('💰 예산 현황').setFontSize(16).setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle').setBackground('#b50005').setFontColor('#ffffff');
-  L('J3:N3', '총 예산 (직접 입력)', '#5c6bc0');
-  V('J4:N5', '#ffffff', 26).setValue(prevBudget).setFontColor('#283593').setNote('총 예산 직접 입력');
-  L('J6:N6', '사용 예산', '#ef6c00');
-  V('J7:N8', '#fff3e0', 26).setFontColor('#e65100')
-    .setFormula('=ARRAYFORMULA(SUM(IF(' + D + '="",0,IF(ISNUMBER(' + G + ')*(' + C + '>0),ROUNDUP(' + G + '/' + C + ',0)*' + D + ',' + D + '))))')
-    .setNote('자동 계산: 품목별 (초기 재고 ÷ 묶음 수량, 올림) × 묶음 가격의 합계. 초기 재고 미입력 시 묶음 1개 가격으로 계산함.');
-  L('J9:N9', '남은 예산', '#2e7d32');
-  V('J10:N11', '#e8f5e9', 30).setFontColor('#1b5e20').setFormula('=J4-J7').setNote('자동 계산: 총 예산 − 사용 예산');
-  // 보조 정보
-  sh.getRange('J13:K13').merge().setValue('총 인원').setFontWeight('bold').setHorizontalAlignment('center').setBackground('#fff3e0');
-  sh.getRange('L13:N13').merge().setFontWeight('bold').setHorizontalAlignment('center').setBackground('#f3f3f3').setNumberFormat('#,##0"명"')
+  sh.getRange('N3:R3').merge().setValue('💰 예산 현황').setFontSize(16).setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle').setBackground('#b50005').setFontColor('#ffffff');
+  L('N4:R4', '총 예산 (직접 입력)', '#5c6bc0');
+  V('N5:R6', '#ffffff', 26).setValue(prevBudget).setFontColor('#283593').setNote('총 예산 직접 입력');
+  L('N7:R7', '사용 예산', '#ef6c00');
+  V('N8:R9', '#fff3e0', 26).setFontColor('#e65100').setFormula('=SUMPRODUCT(' + Dr + ',' + Fr + ')')
+    .setNote('자동 계산: 품목별 개별 가격 × 초기 재고의 합계');
+  L('N10:R10', '남은 예산', '#2e7d32');
+  V('N11:R12', '#e8f5e9', 30).setFontColor('#1b5e20').setFormula('=N5-N8').setNote('자동 계산: 총 예산 − 사용 예산');
+  sh.getRange('N14:O14').merge().setValue('총 인원').setFontWeight('bold').setHorizontalAlignment('center').setBackground('#fff3e0');
+  sh.getRange('P14:R14').merge().setFontWeight('bold').setHorizontalAlignment('center').setBackground('#f3f3f3').setNumberFormat('#,##0"명"')
     .setFormula('=IFERROR(COUNTIFS(INDEX(\'학생\'!$A:$Z,0,MATCH("이름",\'학생\'!$1:$1,0)),"<>",INDEX(\'학생\'!$A:$Z,0,MATCH("학년",\'학생\'!$1:$1,0)),"<>샘플")-1,0)')
     .setNote('자동 집계: [학생] 탭 학생 수 (샘플 학생 제외)');
-  sh.getRange('J14:K14').merge().setValue('1인당 사용 금액').setFontWeight('bold').setHorizontalAlignment('center').setBackground('#fff3e0');
-  sh.getRange('L14:N14').merge().setFontWeight('bold').setHorizontalAlignment('center').setBackground('#f3f3f3').setNumberFormat('#,##0"원"')
-    .setFormula('=IF(L13>0,J7/L13,"")');
-  [3,6,9].forEach(function(r){ sh.setRowHeight(r, 30); });
-  [4,5,7,8,10,11].forEach(function(r){ sh.setRowHeight(r, 30); });
-  sh.getRange('J2:N11').setBorder(true,true,true,true,false,false,'#5c2b10',SpreadsheetApp.BorderStyle.SOLID_THICK);
-  ['J3:N5','J6:N8','J9:N11'].forEach(function(a){ sh.getRange(a).setBorder(true,true,true,true,false,false,'#5c2b10',SpreadsheetApp.BorderStyle.SOLID_MEDIUM); });
-  sh.getRange('J13:N14').setBorder(true,true,true,true,true,true,'#bdbdbd',SpreadsheetApp.BorderStyle.SOLID);
+  sh.getRange('N15:O15').merge().setValue('1인당 사용 금액').setFontWeight('bold').setHorizontalAlignment('center').setBackground('#fff3e0');
+  sh.getRange('P15:R15').merge().setFontWeight('bold').setHorizontalAlignment('center').setBackground('#f3f3f3').setNumberFormat('#,##0"원"')
+    .setFormula('=IF(P14>0,N8/P14,"")');
+  for (var rr = 4; rr <= 12; rr++) sh.setRowHeight(rr, 30);
+  sh.getRange('N3:R12').setBorder(true,true,true,true,false,false,'#5c2b10',SpreadsheetApp.BorderStyle.SOLID_THICK);
+  ['N4:R6','N7:R9','N10:R12'].forEach(function(a){ sh.getRange(a).setBorder(true,true,true,true,false,false,'#5c2b10',SpreadsheetApp.BorderStyle.SOLID_MEDIUM); });
+  sh.getRange('N14:R15').setBorder(true,true,true,true,true,true,'#bdbdbd',SpreadsheetApp.BorderStyle.SOLID);
   sh.setConditionalFormatRules([
-    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$J$10<0').setBackground('#ffcdd2').setFontColor('#b50005').setRanges([sh.getRange('J10:N11')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=AND($J$4>0,$J$10>=0,$J$10<=$J$4*0.1)').setBackground('#ffe0b2').setFontColor('#e65100').setRanges([sh.getRange('J10:N11')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$H' + first + '="없음"').setFontColor('#bbbbbb').setRanges([sh.getRange(first,8,ROWS,1)]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=AND(ISNUMBER($H' + first + '),$H' + first + '<=10)').setBackground('#ffd6d3').setFontColor('#b50005').setRanges([sh.getRange(first,8,ROWS,1)]).build()
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$N$11<0').setBackground('#ffcdd2').setFontColor('#b50005').setRanges([sh.getRange('N11:R12')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=AND($N$5>0,$N$11>=0,$N$11<=$N$5*0.1)').setBackground('#ffe0b2').setFontColor('#e65100').setRanges([sh.getRange('N11:R12')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$G' + first + '="없음"').setFontColor('#bbbbbb').setRanges([sh.getRange(first,7,ROWS,1)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=AND(ISNUMBER($G' + first + '),$G' + first + '<=10)').setBackground('#ffd6d3').setFontColor('#b50005').setRanges([sh.getRange(first,7,ROWS,1)]).build()
   ]);
   SpreadsheetApp.flush();
 }
@@ -890,7 +896,7 @@ function 물품동기화() {
   var bv = buy.getRange(4,1,bl-3,BUY_H.length).getValues();
   var want = {}, order = [];
   bv.forEach(function(r){
-    var nm = String(r[bh.indexOf('물품명')]).trim(); if (!nm) return;
+    var nm = String(r[bh.indexOf('물품')]).trim(); if (!nm) return;
     var cat = BUY_CAT_TO_ITEM[String(r[bh.indexOf('카테고리')]).trim()] || '기타';
     var init = r[bh.indexOf('초기 재고')];
     if (!want[nm]) order.push(nm);
