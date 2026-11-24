@@ -886,6 +886,7 @@ function 물품구매시트() {
   }
   sh.getRange(first,6,ROWS,1).setFormulas(fF);
   var gF = []; for (var r2 = first; r2 <= last; r2++) gF.push(['=IF($E' + r2 + '="","",$E' + r2 + ')']);
+  sh.getRange(first,6,ROWS,3).clearDataValidations();  // 예전 '숫자만' 규칙이 수식을 막지 않게 먼저 해제
   sh.getRange(first,7,ROWS,1).setFormulas(gF);
   sh.getRange(first,8,ROWS,1).setFormulas(hF);
   var sv = sh.getRange(first,1,ROWS,10).getValues();
