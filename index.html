@@ -198,8 +198,9 @@ section.view.on{display:block}
 .ribbon-title{position:relative;background:var(--cream);border:3px solid var(--line);border-radius:18px;padding:6px 18px 4px;box-shadow:0 5px 0 var(--line)}
 .ribbon-title h3{font-size:clamp(29px,5.1vw,37px);color:var(--deep);line-height:1.1}
 .ribbon-title p{font-size:18px;color:#7a5a4a}
-.ribbon-title .bubble{position:absolute;left:calc(100% + 22px);top:50%;transform:translateY(-50%);z-index:2;background:#fff;border:3px solid var(--line);border-radius:22px;padding:9px 18px 7px;font-family:'Jua',sans-serif;font-size:19px;line-height:1.2;color:var(--line);white-space:nowrap;box-shadow:0 4px 0 var(--line);animation:bob 2.6s ease-in-out infinite}
-.ribbon-title .bubble::before{content:"";position:absolute;left:-11px;top:50%;width:16px;height:16px;margin-top:-8px;background:#fff;border-left:3px solid var(--line);border-bottom:3px solid var(--line);transform:rotate(45deg);border-bottom-left-radius:5px}
+.ribbon-title .bubble{position:absolute;left:calc(100% + 6px);top:50%;margin-top:-30px;height:60px;z-index:2;animation:bob 2.6s ease-in-out infinite}
+.ribbon-title .bubble svg{position:absolute;left:0;top:0;overflow:visible}
+.ribbon-title .bubble span{position:relative;display:block;padding:0 22px 0 38px;line-height:54px;font-family:'Jua',sans-serif;font-size:19px;color:var(--line);white-space:nowrap}
 @media (max-width:900px){.ribbon-title .bubble{display:none}}
 
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:30px 22px;padding-top:12px}
@@ -864,10 +865,23 @@ function renderShop(){
     const ORD={snack_b:1,snack_c:2,snack_a:3}; const list=S.items.filter(i=>i.cat===c).sort((x,y)=>(ORD[x.id]||0)-(ORD[y.id]||0)); if(!list.length) return '';
     const m=CATMETA[c]||{t:c,d:'',ch:'turtle_happy',say:'구경해 봐!'};
     return `<div class="cat"><div class="cat-head"><img class="who" src="img/xmas/${m.ch}.webp" alt="">
-      <div class="ribbon-title"><h3>${esc(m.t)}</h3><p>${esc(m.d)}</p><div class="bubble">${esc(m.say)}</div></div></div>
+      <div class="ribbon-title"><h3>${esc(m.t)}</h3><p>${esc(m.d)}</p><div class="bubble"><svg aria-hidden="true"></svg><span>${esc(m.say)}</span></div></div></div>
       <div class="grid ${(c==='참가권'||list.length===3)?'tk3':''}">${list.map(cardHTML).join('')}</div></div>`;
   }).join('');
+  requestAnimationFrame(fitBubbles);
 }
+/* 말풍선: 몸통+꼬리를 한 덩어리 SVG로 (글자 길이에 맞춰 그림) */
+function fitBubbles(){
+  document.querySelectorAll('.ribbon-title .bubble').forEach(b=>{
+    const sp=b.querySelector('span'), sv=b.querySelector('svg'); if(!sp||!sv) return;
+    const w=sp.offsetWidth; if(!w) return;
+    const x0=14, y0=3, H=50, r=H/2, x1=w-2;
+    const d=`M${x0+r} ${y0} H${x1-r} A${r} ${r} 0 0 1 ${x1-r} ${y0+H} H${x0+r+6} L1 ${y0+H+4} L${x0+3} ${y0+35} A${r} ${r} 0 0 1 ${x0+r} ${y0} Z`;
+    sv.setAttribute('width',w); sv.setAttribute('height',H+12); sv.setAttribute('viewBox',`0 0 ${w} ${H+12}`);
+    sv.innerHTML=`<path d="${d}" fill="#2b1a14" transform="translate(0,4)"/><path d="${d}" fill="#fff" stroke="#2b1a14" stroke-width="3.5" stroke-linejoin="round"/>`;
+  });
+}
+document.fonts&&document.fonts.ready.then(()=>fitBubbles());
 function cardHTML(it){
   const prep=!it.off&&it.prep, q=cart[it.id]||0, max=maxAddable(it), sold=!prep&&(it.off||it.stock<=0), hot=!sold&&!prep&&(S.popular||[]).some(p=>p.id===it.id);
   const limTxt=it.limit>0?`<span class="limit-badge">${it.mine>=it.limit?'구매 완료 ✓':`1인 ${it.limit}개${it.limit>1?` · ${it.mine}/${it.limit}`:''}`}</span>`:'';
@@ -966,6 +980,7 @@ function show(v){
   document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.dataset.v===v));
   $('cartFab').style.display=v==='shop'?'flex':'none';
   if(v==='roulette') drawWheel(0);
+  if(v==='shop') requestAnimationFrame(fitBubbles);
 }
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{location.hash=b.dataset.v;show(b.dataset.v)});
 window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
