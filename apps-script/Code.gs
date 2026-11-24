@@ -4,7 +4,7 @@ var HEADERS = {
   users:  ['이름','비밀번호','포인트','학년','담임'],
   orders: ['지급완료','시간','주문번호','이름','상품ID','상품명','수량','단가','금액','주문후포인트','학생코드'],
   box:    ['등급','상품명','이미지','가중치','남은수량','처음수량'],
-  roul:   ['칸','상품명','이미지','남은수량'],
+  roul:   ['칸','표시','상품명','이미지','확률','남은수량'],
   wins:   ['지급완료','시간','이름','게임','등급','상품명','이미지','학생코드'],
   letters:['선생님','학생 이름','내용','학년','시간','편지에 쓴 이름','명단 담임','지급포인트','학생코드'],
   comments:['시간','학년','이름','내용','상태','지급포인트','학생코드'],
@@ -24,7 +24,7 @@ var SEED = {
     ['ticket_rps','참가권','선생님과 가위바위보 참가권',500,100,1,'ticket_rps','Y','선생님과 가위바위보를 해서 이기면 특별 간식 제공!'],
     ['cp_word','쿠폰','단어커트 +5',2500,100,1,'cp_word','Y',''],
     ['cp_oral','쿠폰','구두 면제권',3000,100,1,'cp_oral','Y',''],
-    ['cp_hw','쿠폰','한과목 숙제 면제권',4000,100,1,'cp_hw','Y',''],
+    ['cp_hw','쿠폰','한과목 숙제 면제권',4000,100,1,'cp_hw','숨김',''],
     ['cp_retest','쿠폰','재시험 면제권',4500,100,1,'cp_retest','Y',''],
     ['snack_b','간식','이브의 랜덤 짭짤 과자',1500,100,'','snack_b','Y','이브가 고른 짭짤한 과자 중 하나를 랜덤으로 받아요!'],
     ['snack_c','간식','와비의 랜덤 달콤 과자',1500,100,'','snack_c','Y','와비가 고른 달콤한 과자 중 하나를 랜덤으로 받아요!'],
@@ -42,17 +42,27 @@ var SEED = {
     ['김민준','1234',10000,'샘플',''],['이서연','1234',10000,'샘플',''],['박지호','1234',10000,'샘플',''],['최하은','1234',10000,'샘플',''],['정도윤','1234',10000,'샘플',''],
     ['강서윤','1234',10000,'샘플',''],['조예준','1234',10000,'샘플',''],['윤지우','1234',10000,'샘플',''],['장시우','1234',10000,'샘플',''],['임하린','1234',10000,'샘플','']
   ],
+  // 가중치 = 확률(%)
   box: [
-    ['1등','배달의민족 3만원권','baemin',1,1,1],
-    ['2등','크리스마스 불빛 반지','ring',5,100,100],
-    ['2등','크리스마스 스쿼시','squishy',5,100,100],
-    ['3등','랜덤 지우개','eraser_gacha',15,100,100],
-    ['3등','크리스마스 4색 볼펜','charpen',15,100,100],
-    ['4등','디비의 랜덤 사탕과 젤리','snack_a',59,100,100]
+    ['1등','배달의 민족 3만원권','baemin',1,3,3],
+    ['2등','한과목 숙제 면제권','cp_hw',4,100,100],
+    ['3등','이브의 랜덤 짭짤 과자','snack_b',10,100,100],
+    ['4등','크리스마스 사탕','lollipop',15,100,100],
+    ['5등','랜덤 필기구','stationery_rand',30,100,100],
+    ['6등','구두 면제권','cp_oral',40,100,100]
   ],
+  // 칸, 표시(룰렛 글자), 상품명(시트·당첨 기록), 이미지(비우면 글자만 + 작은 칸), 확률(%), 남은수량
   roul: [
-    [1,'디비의 랜덤 사탕과 젤리','snack_a',100],[2,'이브의 랜덤 짭짤 과자','snack_b',100],[3,'랜덤 연필','pencil_rand',100],
-    [4,'와비의 랜덤 달콤 과자','snack_c',100],[5,'형광펜','highlighter',100],[6,'단어커트 +5','cp_word',100]
+    [1,'랜덤 연필','랜덤 연필','pencil_rand',10,100],
+    [2,'랜덤 사탕','디비의 랜덤 사탕과 젤리','snack_a',10,100],
+    [3,'랜덤 달콤과자','와비의 랜덤 달콤 과자','snack_c',10,100],
+    [4,'구두 면제권','구두 면제권','cp_oral',10,100],
+    [5,'재시험 면제권','재시험 면제권','cp_retest',10,100],
+    [6,'단어 커트 +5','단어커트 +5','cp_word',10,100],
+    [7,'한번 더','한번 더','again',10,9999],
+    [8,'랜덤 지우개','랜덤 지우개','eraser_gacha',10,100],
+    [9,'꽝','꽝','miss',19,9999],
+    [10,'전체 숙제 면제권','전체 숙제 면제권','',1,100]
   ]
 };
 
@@ -60,7 +70,9 @@ function E_num(v){ var n = Number(v); return isNaN(n) ? 0 : n; }
 function E_str(v){ return v === null || v === undefined ? '' : String(v).trim(); }
 function E_mark(o,k){ (o._dirty = o._dirty || []).indexOf(k) < 0 && o._dirty.push(k); }
 function E_limit(i){ var l = E_num(i['1인최대']); return E_str(i['카테고리']) === '쿠폰' ? (l > 0 ? Math.min(l,1) : 1) : l; }
-function E_onSale(i){ return E_str(i['판매']).toUpperCase() !== 'N' && E_str(i['ID']) !== ''; }
+function E_hidden(i){ return E_str(i['판매']) === '숨김'; }
+function E_onSale(i){ var s = E_str(i['판매']).toUpperCase(); return s !== 'N' && s !== '숨김' && E_str(i['ID']) !== ''; }
+var ROUL_AGAIN = '한번 더', ROUL_MISS = '꽝';
 
 function E_pw(v){ return E_str(v).replace(/\s/g,'').toUpperCase(); }
 function E_key(u){ return E_str(u['이름']) + '|' + E_pw(u['비밀번호']); }
@@ -78,7 +90,8 @@ function E_bought(db, u, id){
   return db.orders.reduce(function(s,o){ return (E_isMe(o,u) && E_str(o['상품ID'])===id) ? s + E_num(o['수량']) : s; }, 0);
 }
 function E_used(db, u, game){
-  return db.wins.filter(function(w){ return E_isMe(w,u) && E_str(w['게임'])===game; }).length;
+  // '한번 더'는 참가권을 쓰지 않은 것으로 쳐요 (= 참가권 1장 돌려받기)
+  return db.wins.filter(function(w){ return E_isMe(w,u) && E_str(w['게임'])===game && E_str(w['상품명'])!==ROUL_AGAIN; }).length;
 }
 function E_tickets(db, u){
   return { box: E_bought(db,u,'ticket_box') - E_used(db,u,'랜덤박스'),
@@ -88,13 +101,13 @@ function E_state(db, u){
   var name = E_str(u['이름']);
   return {
     user: { name: name, points: E_num(u['포인트']), tickets: E_tickets(db,u), grade: E_str(u['학년']), teacher: E_str(u['담임']) },
-    items: db.items.filter(function(i){ return E_str(i['ID']) !== ''; }).map(function(i){ var id=E_str(i['ID']), st=E_stock(db,i); return { off: !E_onSale(i), prep: E_num(i['가격']) <= 0,
+    items: db.items.filter(function(i){ return E_str(i['ID']) !== '' && !E_hidden(i); }).map(function(i){ var id=E_str(i['ID']), st=E_stock(db,i); return { off: !E_onSale(i), prep: E_num(i['가격']) <= 0,
       id:id, cat:E_str(i['카테고리']), name:E_str(i['이름']), price:E_num(i['가격']), stock:st.day, base:st.base,
       limit:E_limit(i), img:E_str(i['이미지']), desc:E_str(i['설명']), mine:E_bought(db,u,id) }; }),
     box: db.box.filter(function(b){ return E_str(b['상품명']); }).map(function(b){ var l = E_num(b['남은수량']); return {grade:E_str(b['등급']), name:E_str(b['상품명']), img:E_str(b['이미지']), left:l, init:Math.max(E_num(b['처음수량']), l)}; }),
-    roul: db.roul.filter(function(r){ return E_str(r['상품명']); }).map(function(r){ return {name:E_str(r['상품명']), img:E_str(r['이미지']), left:E_num(r['남은수량'])}; }),
+    roul: db.roul.filter(function(r){ return E_str(r['상품명']); }).map(function(r){ return {name:E_str(r['표시']) || E_str(r['상품명']), full:E_str(r['상품명']), img:E_str(r['이미지']), left:E_num(r['남은수량'])}; }),
     wins: (function(){ var m = function(w){ return {t:E_str(w['시간']), who:E_who(db,w), nm:E_mask(w['이름']), g:E_gradeOf(db,w), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; };
-      var top = db.wins.filter(function(w){ return E_str(w['등급']) === '1등'; }), rest = db.wins.slice(-60).filter(function(w){ return E_str(w['등급']) !== '1등'; });
+      var top = db.wins.filter(function(w){ return E_str(w['등급']) === '1등'; }), rest = db.wins.filter(function(w){ var n = E_str(w['상품명']); return n !== ROUL_MISS && n !== ROUL_AGAIN; }).slice(-60).filter(function(w){ return E_str(w['등급']) !== '1등'; });
       return top.reverse().map(m).concat(rest.reverse().map(m)); })(),
     popular: E_popular(db),
     pools: db.pools || {},
@@ -135,15 +148,15 @@ function E_play(db, req, now, rand){
   if ((isRoul ? t.roul : t.box) < 1) throw new Error(game + ' 참가권이 없어요! 마켓에서 참가권을 먼저 사 주세요 🎟️');
   var list = isRoul ? db.roul.filter(function(r){ return E_str(r['상품명']); }) : db.box.filter(function(b){ return E_str(b['상품명']); });
   var cand = [];
-  list.forEach(function(r,i){ if (E_num(r['남은수량']) > 0 && (isRoul || E_num(r['가중치']) > 0)) cand.push(i); });
+  var wk = isRoul ? '확률' : '가중치';
+  var useW = !isRoul || list.some(function(r){ return E_str(r['확률']) !== ''; });
+  var wt = function(r){ return useW ? E_num(r[wk]) : 1; };
+  list.forEach(function(r,i){ if (E_num(r['남은수량']) > 0 && wt(r) > 0) cand.push(i); });
   if (!cand.length) throw new Error('상품이 모두 소진되었어요. 선생님께 알려 주세요!');
   var idx;
-  if (isRoul) idx = cand[Math.floor(rand() * cand.length)];
-  else {
-    var tw = cand.reduce(function(s,i){ return s + E_num(list[i]['가중치']); }, 0), x = rand() * tw;
-    idx = cand[cand.length-1];
-    for (var k = 0; k < cand.length; k++){ x -= E_num(list[cand[k]]['가중치']); if (x < 0){ idx = cand[k]; break; } }
-  }
+  var tw = cand.reduce(function(s,i){ return s + wt(list[i]); }, 0), x = rand() * tw;
+  idx = cand[cand.length-1];
+  for (var k = 0; k < cand.length; k++){ x -= wt(list[cand[k]]); if (x < 0){ idx = cand[k]; break; } }
   var row = list[idx];
   row['남은수량'] = E_num(row['남은수량']) - 1; E_mark(row,'남은수량');
   var w = {'시간':now,'이름':name,'게임':game,'등급':E_str(row['등급']),'상품명':E_str(row['상품명']),'이미지':E_str(row['이미지']),'학생코드':E_key(u)};
@@ -646,6 +659,7 @@ function onOpen() {
     .addItem('물품 구매 목록 정리 (새 이름으로)', '물품구매목록정리')
     .addItem('물품 구매 탭 만들기/정리하기', '물품구매시트')
     .addItem('★ 새 물품 목록 적용 (물품·물품 구매·경품)', '새물품목록적용')
+    .addItem('★ 룰렛·랜덤박스 새 구성 적용', '룰렛박스새구성적용')
     .addSeparator()
     .addItem('지금 탭: 이름순 정렬 (가나다)', '이름순정렬')
     .addItem('지금 탭: 선생님 → 이름순 정렬 (명단·편지)', '담임순정렬')
@@ -673,10 +687,10 @@ function 꾸미기() {
   명단반영();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var NOTES = {
-    items: {'ID':'사이트가 물건을 구분하는 이름표예요. 이미 팔린 물건은 바꾸지 마세요!','카테고리':'참가권 / 쿠폰 / 간식 / 문구 / 굿즈 중 하나','설명':'적어 두면 사이트 물건 이름 옆에 ? 버튼이 생기고, 누르면 이 설명이 보여요','초기재고':'처음 준비한 전체 수량 (직접 입력)','현재고':'자동: 초기재고 − 지금까지 팔린 수량','당일판매수량':'오늘 팔 수량 (직접 입력). 비워 두면 현재고만큼 팔아요','당일재고':'자동: 당일판매수량 − 오늘 팔린 수량. 사이트에는 이 숫자로 남은 정도가 보여요','이름':'사이트에 보이는 물건 이름','가격':'숫자만 (예: 3000)','1인최대':'한 사람이 살 수 있는 최대 개수. 비워 두면 제한 없음','이미지':'사진 파일 이름 (보통 ID와 같아요)','판매':'Y = 판매 / N = 사이트에서 숨기기'},
+    items: {'ID':'사이트가 물건을 구분하는 이름표예요. 이미 팔린 물건은 바꾸지 마세요!','카테고리':'참가권 / 쿠폰 / 간식 / 문구 / 굿즈 중 하나','설명':'적어 두면 사이트 물건 이름 옆에 ? 버튼이 생기고, 누르면 이 설명이 보여요','초기재고':'처음 준비한 전체 수량 (직접 입력)','현재고':'자동: 초기재고 − 지금까지 팔린 수량','당일판매수량':'오늘 팔 수량 (직접 입력). 비워 두면 현재고만큼 팔아요','당일재고':'자동: 당일판매수량 − 오늘 팔린 수량. 사이트에는 이 숫자로 남은 정도가 보여요','이름':'사이트에 보이는 물건 이름','가격':'숫자만 (예: 3000)','1인최대':'한 사람이 살 수 있는 최대 개수. 비워 두면 제한 없음','이미지':'사진 파일 이름 (보통 ID와 같아요)','판매':'Y = 판매 / N = 사이트에 회색 매진 카드로 보임 / 숨김 = 사이트 목록에서 아예 안 보임 (뽑기·룰렛 전용 상품)'},
     users: {'이름':'학생이 입장할 때 쓰는 이름. 같은 이름 두 명은 안 돼요!','비밀번호':'초대장 번호','포인트':'남은 포인트. 주문하면 자동으로 줄어요'},
     box:   {'등급':'1등, 2등 …','가중치':'숫자가 클수록 잘 나와요 (확률)','남은수량':'0이 되면 더 이상 안 나와요'},
-    roul:  {'칸':'룰렛 칸 번호 (순서)','남은수량':'0이 되면 회색 칸이 되고 안 나와요'},
+    roul:  {'칸':'룰렛 칸 번호 (순서)','표시':'룰렛 판에 보이는 짧은 글자','상품명':'당첨 기록에 남는 원래 이름','이미지':'비워 두면 그림 없이 글자만, 작은 칸이 돼요','확률':'뽑힐 확률(%). 합이 100이 아니어도 비율대로 뽑아요. 칸 크기와는 상관없어요','남은수량':'0이 되면 회색 칸이 되고 안 나와요'},
     orders:{'주문번호':'학생이 선생님께 보여주는 번호'},
     wins:  {},
     letters: {'선생님':'학생이 직접 쓴 받는 선생님 이름 (▼ 필터로 내 이름만 골라 보세요)','학생 이름':'편지를 쓴 학생 (로그인 이름)','내용':'편지 내용','지급포인트':'편지로 받은 포인트'},
@@ -733,7 +747,7 @@ function 꾸미기() {
       if (k==='orders'||k==='wins') return; var r = body(nm); if (r) r.setDataValidation(num);
     });
     if (k === 'items') {
-      var yn = body('판매'); if (yn) yn.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['Y','N'], true).setAllowInvalid(false).build());
+      var yn = body('판매'); if (yn) yn.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['Y','N','숨김'], true).setAllowInvalid(false).build());
       var cat = body('카테고리'); if (cat) cat.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['참가권','쿠폰','간식','문구','굿즈','기타'], true).setAllowInvalid(true).build());
     }
     if (k === 'comments') {
@@ -746,7 +760,7 @@ function 꾸미기() {
       sh.setFrozenColumns(2); if (sh.getFilter()) sh.getFilter().remove(); sh.getRange(1,1,sh.getMaxRows(),n).createFilter(); }
     if (k === 'comments') { var cc = body('내용'); if (cc) { cc.setWrap(true).setHorizontalAlignment('left'); sh.setColumnWidth(col('내용'), 320); } }
     if (k === 'box') {
-      var gr = body('등급'); if (gr) gr.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['1등','2등','3등','4등','5등'], true).setAllowInvalid(true).build());
+      var gr = body('등급'); if (gr) gr.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['1등','2등','3등','4등','5등','6등'], true).setAllowInvalid(true).build());
     }
 
     // colour rules
@@ -969,17 +983,19 @@ function 물품구매시트() {
 }
 
 /* ===== 2026 새 물품 목록 한 번에 적용 (물품 · 물품 구매 · 랜덤박스 · 룰렛) ===== */
-var BUY_CATS = ['사탕/젤리','짭짤과자 A','짭짤과자 B','달콤과자 A','달콤과자 B','랜덤 연필','랜덤 지우개','문구','면제권','굿즈','기타'];
+var BUY_CATS = ['사탕/젤리','짭짤과자 A','짭짤과자 B','달콤과자 A','달콤과자 B','랜덤 연필','랜덤 지우개','문구','면제권','굿즈','경품','기타'];
 // 물품 구매 카테고리 → 사이트 판매 물품 이름 (랜덤 지급 묶음)
 var BUY_POOL = {'사탕/젤리':'디비의 랜덤 사탕과 젤리','짭짤과자 A':'이브의 랜덤 짭짤 과자','짭짤과자 B':'이브의 랜덤 짭짤 과자',
   '달콤과자 A':'와비의 랜덤 달콤 과자','달콤과자 B':'와비의 랜덤 달콤 과자','랜덤 연필':'랜덤 연필','랜덤 지우개':'랜덤 지우개'};
 var BUY_SEED = [
-  ['단어커트 +5','면제권'],['구두 면제권','면제권'],['한과목 숙제 면제권','면제권'],['재시험 면제권','면제권'],
+  ['단어커트 +5','면제권'],['구두 면제권','면제권'],['한과목 숙제 면제권','면제권','N'],['재시험 면제권','면제권'],['전체 숙제 면제권','면제권','N'],
   ['랜덤 사탕 or 젤리 (하리보)','사탕/젤리'],['랜덤 사탕 or 젤리 (새콤짱)','사탕/젤리'],
   ['추억의 옛날과자 (짭짤) - 차카니','짭짤과자 A'],['추억의 옛날과자 (짭짤) - 꼬꼬스낵','짭짤과자 B'],
   ['추억의 옛날과자 (달콤) - 초코 팅촉','달콤과자 A'],['추억의 옛날과자 (달콤) - 꾀돌이','달콤과자 B'],
   ['크리스마스 4색 볼펜','문구'],['크리스마스 연필','랜덤 연필'],['DYB 연필','랜덤 연필'],['형광펜','문구'],['수정테이프','문구'],['볼펜','문구'],
-  ['크리스마스 불빛 반지','굿즈'],['크리스마스 스쿼시','굿즈'],['랜덤 지우개 (치이카와)','랜덤 지우개'],['랜덤 지우개 (짱구)','랜덤 지우개'],['랜덤 지우개 (DYB)','랜덤 지우개']
+  ['크리스마스 불빛 반지','굿즈'],['크리스마스 스쿼시','굿즈'],['랜덤 지우개 (치이카와)','랜덤 지우개'],['랜덤 지우개 (짱구)','랜덤 지우개'],['랜덤 지우개 (DYB)','랜덤 지우개'],
+  // 경품 (사이트 판매 X): [이름, 카테고리, 판매 여부, 개별 가격, 구매량]
+  ['배달의 민족 3만원권','경품','N',30000,3],['크리스마스 사탕','경품','N']
 ];
 function 새물품목록적용() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), ui = null;
@@ -1029,7 +1045,7 @@ function 새물품목록적용() {
   var out = BUY_SEED.map(function(sr){
     var k = sr[0] + '|' + sr[1], old = (prev[k] || []).shift();
     var get = function(name){ return old ? old[bh.indexOf(name)] : ''; };
-    return [sr[0], sr[1], get('묶음 수량 및 가격'), get('개별 가격'), get('구매량'), null, get('초기 재고'), null, get('구매 링크'), 'Y'];
+    return [sr[0], sr[1], get('묶음 수량 및 가격'), get('개별 가격') === '' && sr[3] ? sr[3] : get('개별 가격'), get('구매량') === '' && sr[4] ? sr[4] : get('구매량'), null, get('초기 재고'), null, get('구매 링크'), sr[2] || 'Y'];
   });
   buy.getRange(first,1,120,5).clearContent(); buy.getRange(first,7,120,1).clearContent(); buy.getRange(first,9,120,2).clearContent();
   out.forEach(function(r, i){
@@ -1059,10 +1075,12 @@ function 물품구매목록정리_(ss) {
     if (/미정/.test(nm) && byCat[cat]) return byCat[cat];
     var m = {'차카니':'추억의 옛날과자 (짭짤) - 차카니','꼬꼬스낵':'추억의 옛날과자 (짭짤) - 꼬꼬스낵','초코 팅촉':'추억의 옛날과자 (달콤) - 초코 팅촉',
       '꾀돌이':'추억의 옛날과자 (달콤) - 꾀돌이','하리보':'랜덤 사탕 or 젤리 (하리보)','새콤짱':'랜덤 사탕 or 젤리 (새콤짱)',
-      '치이카와 지우개':'랜덤 지우개 (치이카와)','짱구 지우개':'랜덤 지우개 (짱구)','크리스마스 불빛반지':'크리스마스 불빛 반지'};
+      '치이카와 지우개':'랜덤 지우개 (치이카와)','배달의민족 3만원권':'배달의 민족 3만원권','배민 3만원권':'배달의 민족 3만원권','짱구 지우개':'랜덤 지우개 (짱구)','크리스마스 불빛반지':'크리스마스 불빛 반지'};
+    if (/롤리팝/.test(nm)) return '크리스마스 사탕';
+    if (/전체 숙제/.test(nm)) return '전체 숙제 면제권';
     return m[nm] || nm;
   };
-  var DROP = /다믈라|젤리 \(미정\)|^과자 미정$|과수원|떡볶이|돌려돌려|재미스|네모스낵$|감자알칩|초코칩 미니|롤리팝|핫팩|노트|키링|산타 문구|전체 숙제|온라인 숙제/;
+  var DROP = /다믈라|젤리 \(미정\)|^과자 미정$|과수원|떡볶이|돌려돌려|재미스|네모스낵$|감자알칩|초코칩 미니|핫팩|노트|키링|산타 문구|온라인 숙제/;
   var keep = {}, extra = [];
   var seedNames = {}; BUY_SEED.forEach(function(r){ seedNames[r[0]] = true; });
   rows.forEach(function(r){
@@ -1075,7 +1093,8 @@ function 물품구매목록정리_(ss) {
   var out = BUY_SEED.map(function(sr){
     var o = keep[sr[0]];
     var v = o ? o.slice() : BUY_H.map(function(){ return ''; });
-    v[0] = sr[0]; v[1] = sr[1]; if (String(v[9]).trim() === '') v[9] = 'Y';
+    v[0] = sr[0]; v[1] = sr[1]; if (sr[2]) v[9] = sr[2]; else if (String(v[9]).trim() === '') v[9] = 'Y';
+    if (sr[3] && v[3] === '') v[3] = sr[3]; if (sr[4] && v[4] === '') v[4] = sr[4];
     return v;
   }).concat(extra);
   if (n) { sh.getRange(first,1,n,5).clearContent(); sh.getRange(first,9,n,2).clearContent(); }
@@ -1092,4 +1111,36 @@ function 물품구매목록정리() {
   setup(); 물품구매목록정리_(ss); 물품구매시트(); 초기재고반영();
   Logger.log('물품 구매 목록 정리 완료');
   try { SpreadsheetApp.getUi().alert('완료됨', '[물품 구매] 탭 목록 정리 완료. (이전 내용은 백업 탭에 있음)', SpreadsheetApp.getUi().ButtonSet.OK); } catch (x) {}
+}
+
+/** ★ 룰렛·랜덤박스 새 구성 적용: 룰렛 10칸(확률) · 랜덤박스 1~6등 · 한과목 숙제 면제권 사이트 숨김 · 물품 구매 경품 줄 추가 */
+function 룰렛박스새구성적용() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var stamp = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MMdd_HHmm');
+  setup();
+  // 1) 룰렛 · 랜덤박스 탭 (백업 후 새 구성으로)
+  [['roul', SEED.roul], ['box', SEED.box]].forEach(function(p){
+    var sh = ss.getSheetByName(TAB_NAMES[p[0]]); if (!sh) return;
+    if (sh.getLastRow() > 0) sh.copyTo(ss).setName(TAB_NAMES[p[0]] + '_백업_' + stamp);
+    ensureCols_(sh, HEADERS[p[0]]); reorderCols_(sh, HEADERS[p[0]]);
+    var h = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
+    if (sh.getLastRow() > 1) sh.getRange(2,1,sh.getLastRow()-1,h.length).clearContent();
+    var rr = p[1].map(function(r){ var o = {}; HEADERS[p[0]].forEach(function(k,i){ o[k] = r[i]; }); return h.map(function(k){ return o[k] === undefined ? '' : o[k]; }); });
+    sh.getRange(2,1,rr.length,h.length).setValues(rr);
+  });
+  // 2) 물품 탭: 한과목 숙제 면제권 → 숨김 (뽑기·룰렛 전용)
+  var it = ss.getSheetByName(TAB_NAMES.items);
+  if (it && it.getLastRow() > 1) {
+    var ih = it.getRange(1,1,1,it.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
+    var idc = ih.indexOf('ID'), sc = ih.indexOf('판매');
+    if (idc >= 0 && sc >= 0) it.getRange(2,1,it.getLastRow()-1,ih.length).getValues().forEach(function(r, i){
+      if (String(r[idc]).trim() === 'cp_hw') { it.getRange(i+2, sc+1).clearDataValidations().setValue('숨김'); }
+    });
+  }
+  // 3) 물품 구매 탭: 경품 줄 추가 + 한과목/전체 숙제 면제권 판매 여부 N
+  var buy = ss.getSheetByName(BUY_TAB); if (buy) buy.copyTo(ss).setName(BUY_TAB + '_백업_' + stamp);
+  물품구매목록정리_(ss);
+  꾸미기();
+  Logger.log('룰렛·랜덤박스 새 구성 적용 완료');
+  try { SpreadsheetApp.getUi().alert('완료됨', '룰렛·랜덤박스 새 구성 적용 완료. (이전 내용은 _백업_ 탭에 있음)\n확률은 [룰렛] 탭 확률, [랜덤박스] 탭 가중치 칸에서 바꿀 수 있음.', SpreadsheetApp.getUi().ButtonSet.OK); } catch (x) {}
 }

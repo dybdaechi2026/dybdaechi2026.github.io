@@ -196,9 +196,8 @@ section.view.on{display:block}
 .ribbon-title{position:relative;background:var(--cream);border:3px solid var(--line);border-radius:18px;padding:6px 18px 4px;box-shadow:0 5px 0 var(--line)}
 .ribbon-title h3{font-size:clamp(29px,5.1vw,37px);color:var(--deep);line-height:1.1}
 .ribbon-title p{font-size:18px;color:#7a5a4a}
-.bubble{position:relative;z-index:1;background:#fff;border:3px solid var(--line);border-radius:18px;padding:6px 12px 4px;font-size:19px;margin-bottom:58px;margin-left:-4px;max-width:220px}
-.bubble::before{content:"";position:absolute;left:-12px;bottom:10px;border:8px solid transparent;border-right:12px solid var(--line)}
-.bubble::after{content:"";position:absolute;left:-7px;bottom:12px;border:6px solid transparent;border-right:9px solid #fff}
+.bubble{position:relative;z-index:1;align-self:center;margin:0 0 14px 14px;background:#fff;border:3px solid var(--line);border-radius:20px;padding:8px 16px 6px;font-family:'Jua',sans-serif;font-size:18px;line-height:1.25;color:var(--line);white-space:nowrap;box-shadow:0 4px 0 var(--line)}
+.bubble::before{content:"";position:absolute;left:-10px;bottom:12px;width:15px;height:15px;background:#fff;border-left:3px solid var(--line);border-bottom:3px solid var(--line);transform:rotate(45deg);border-bottom-left-radius:4px}
 @media (max-width:640px){.bubble{display:none}}
 
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:30px 22px;padding-top:12px}
@@ -705,7 +704,7 @@ footer{position:relative;z-index:2;margin-top:70px}
           <h3>💬 DYB 칭찬 게시판</h3>
           <p class="hand">DYB에서 좋았던 점, 이번 마켓데이에서 좋았던 점을 남겨 주세요!</p>
           <form class="cform" id="cForm" autocomplete="off">
-            <input id="cText" maxlength="100" placeholder="예) 떡볶이가 정말 맛있었어요! 🌶️">
+            <input id="cText" maxlength="100" placeholder="예) 과자 진짜 맛있어요! 🍪">
             <button class="btn green" type="submit" id="cSend">남기기</button>
           </form>
           <div class="crule" id="cRule">※ 고운 말만 쓸 수 있어요. 나쁜 말을 쓰면 댓글이 바로 지워져요! · 1인 2개까지</div>
@@ -784,8 +783,8 @@ function mockInit(){
   mockDB={today:nowStr().slice(0,5),items:E_seedItems().map(r=>obj(HEADERS.items,r)),users:SEED.users.map(r=>obj(HEADERS.users,r)),
     box:SEED.box.map(r=>obj(HEADERS.box,r)),roul:SEED.roul.map(r=>obj(HEADERS.roul,r)),orders:[],wins:[],letters:[],comments:[],banned:[]};
   [['snack_b',6],['ring',4],['snack_a',9],['pencil_rand',3]].forEach(([id,q],k)=>mockDB.orders.push({'시간':'12/17 09:5'+k+':00','주문번호':'D1'+k,'이름':'샘플','상품ID':id,'상품명':id,'수량':q,'단가':0,'금액':0,'주문후포인트':0}));
-  mockDB.wins.push({'시간':'12/17 09:40:00','이름':'정도윤','게임':'랜덤박스','등급':'1등','상품명':'배달의민족 3만원권','이미지':'baemin','학생코드':''});
-  mockDB.box[0]['남은수량']=0;
+  mockDB.wins.push({'시간':'12/17 09:40:00','이름':'정도윤','게임':'랜덤박스','등급':'1등','상품명':'배달의 민족 3만원권','이미지':'baemin','학생코드':''});
+  mockDB.box[0]['남은수량']=2;
 
   mockDB.pools={'이브의 랜덤 짭짤 과자':['차카니','꼬꼬스낵'],'와비의 랜덤 달콤 과자':['초코 팅촉','꾀돌이'],'디비의 랜덤 사탕과 젤리':['하리보','새콤짱'],'랜덤 연필':['크리스마스 연필','DYB 연필'],'랜덤 지우개':['치이카와','짱구','DYB']};
   mockDB.users.forEach((u,i)=>{u['학년']=['4학년','5학년','6학년'][i%3];u['담임']=['박','최','이'][i%3]+'선생'});
@@ -862,7 +861,7 @@ function renderShop(){
     const ORD={snack_b:1,snack_c:2,snack_a:3}; const list=S.items.filter(i=>i.cat===c).sort((x,y)=>(ORD[x.id]||0)-(ORD[y.id]||0)); if(!list.length) return '';
     const m=CATMETA[c]||{t:c,d:'',ch:'turtle_happy',say:'구경해 봐!'};
     return `<div class="cat"><div class="cat-head"><img class="who" src="img/xmas/${m.ch}.webp" alt="">
-      <div class="ribbon-title"><h3>${esc(m.t)}</h3><p>${esc(m.d)}</p></div><div class="bubble hand">${esc(m.say)}</div></div>
+      <div class="ribbon-title"><h3>${esc(m.t)}</h3><p>${esc(m.d)}</p></div><div class="bubble">${esc(m.say)}</div></div>
       <div class="grid ${(c==='참가권'||list.length===3)?'tk3':''}">${list.map(cardHTML).join('')}</div></div>`;
   }).join('');
 }
@@ -1020,6 +1019,11 @@ boxA.onclick=async()=>{
 function resetBox(){ if(!opening) return; boxA.classList.remove('opened'); opening=false; }
 const PEEKS=['rabbit','whale','turtle_happy','hamster','cat','chick'];
 function reveal(p){
+  if(p.name==='꽝'){ showModal(`<img class="peek" src="img/xmas/turtle.webp" alt=""><div class="rpic"><img src="${imgSrc(p.img)}" alt="" onerror="${IMG_FALLBACK}"></div>
+    <div class="tada" style="font-size:36px">앗, 꽝! 😢</div><p class="who">다음엔 꼭 당첨될 거야!</p><button class="btn red ok" data-close>확인</button>`,true); return; }
+  if(p.name==='한번 더'){ Sfx.fanfare(false); showModal(`<img class="peek" src="img/xmas/chick.webp" alt=""><div class="rpic"><img src="${imgSrc(p.img)}" alt="" onerror="${IMG_FALLBACK}"></div>
+    <div class="tada" style="font-size:36px">🎉 한 번 더! 🎉</div><p class="who">룰렛 참가권 1장을 돌려받았어요!<br>한 번 더 돌려 봐!</p><button class="btn green ok" data-close>좋아!</button>`,true);
+    burst(innerWidth/2,innerHeight/2,120); return; }
   const jack=p.grade==='1등'; Sfx.fanfare(jack);
   showModal(`<img class="peek" src="img/xmas/${PEEKS[Math.floor(Math.random()*PEEKS.length)]}.webp" alt="">
     <div class="tada">🎉 ${jack?'대박!! 1등!!':'짜잔!'} 🎉</div><p class="who">${esc(S.user.name)} 님 당첨!</p>
@@ -1034,26 +1038,34 @@ function reveal(p){
 
 /* ================= ROULETTE ================= */
 const wc=$('wheel'),wx=wc.getContext('2d');
-const SEGC=['#e5403a','#fff8ec','#2fa36b','#ffc83d','#9ad9ff','#ffb3c7','#c9c6ff','#fff8ec'];
-const SEGT=['#fff','#b50005','#fff','#b50005','#2b1a14','#b50005','#2b1a14','#1f7a4d'];
+const SEGC=['#e5403a','#fff8ec','#2fa36b','#ffc83d','#9ad9ff','#ffb3c7','#c9c6ff','#fff8ec','#2fa36b','#ffe680'];
+const SEGT=['#fff','#b50005','#fff','#b50005','#2b1a14','#b50005','#2b1a14','#1f7a4d','#fff','#b50005'];
+const SMALL_DEG=13;   // 이미지 없는 칸(글자만) 크기
+function wheelSegs(){ const W=S.roul, ns=W.filter(w=>!w.img).length, nb=W.length-ns, big=nb?(360-SMALL_DEG*ns)/nb:360/(ns||1);
+  let a=0; return W.map(w=>{const d=(!w.img&&nb)?SMALL_DEG:big; const o={a0:a,d}; a+=d; return o;}); }
 const wImgCache={};
 function wImg(k){ if(!wImgCache[k]){const im=new Image();im.onload=()=>{if(!spinning)drawWheel(0)};im.src=imgSrc(k);wImgCache[k]=im} return wImgCache[k]; }
 let rot=0,spinning=false;
 function drawWheel(){
-  if(!S) return; const W=S.roul, n=W.length||1, R=440, seg=Math.PI*2/n; wx.clearRect(0,0,880,880);
+  if(!S||!S.roul.length) return; const W=S.roul, R=440, segs=wheelSegs(), rad=Math.PI/180; wx.clearRect(0,0,880,880);
   W.forEach((it,i)=>{
-    const a0=-Math.PI/2+i*seg;
+    const g=segs[i], a0=-Math.PI/2+g.a0*rad, seg=g.d*rad;
     wx.beginPath();wx.moveTo(R,R);wx.arc(R,R,R,a0,a0+seg);wx.closePath();wx.fillStyle=it.left>0?SEGC[i%SEGC.length]:'#ddd';wx.fill();
-    wx.strokeStyle='#2b1a14';wx.lineWidth=7;wx.stroke();
+    wx.strokeStyle='#2b1a14';wx.lineWidth=6;wx.stroke();
     wx.save();wx.translate(R,R);wx.rotate(a0+seg/2+Math.PI/2);
-    const im=wImg(it.img);
-    wx.fillStyle='#fff';wx.strokeStyle='#2b1a14';wx.lineWidth=5;wx.beginPath();wx.roundRect(-70,-374,140,140,24);wx.fill();wx.stroke();
-    if(im.complete&&im.naturalWidth){const s=116,ar=im.naturalWidth/im.naturalHeight,w=ar>1?s:s*ar,h=ar>1?s/ar:s;wx.drawImage(im,-w/2,-304-h/2,w,h)}
-    wx.fillStyle=SEGT[i%SEGT.length];wx.font='46px Jua';wx.textAlign='center';wx.lineWidth=8;wx.strokeStyle='rgba(255,255,255,.0)';
-    const words=it.name.includes(' ')?it.name.split(' '):[it.name];
-    const mid=(i+.5)*360/n;
-    if(mid>90&&mid<270){wx.save();wx.translate(0,-200);wx.rotate(Math.PI);words.forEach((w,k)=>wx.fillText(w,0,6+k*44-(words.length-1)*22));wx.restore()}
-    else words.forEach((w,k)=>wx.fillText(w,0,-182+k*44));
+    const col=it.left>0?SEGT[i%SEGT.length]:'#888';
+    if(!it.img){ // 글자만 (작은 칸): 바깥쪽에서 안쪽으로 세로 글씨
+      wx.rotate(-Math.PI/2); wx.fillStyle=col; wx.font='27px Jua'; wx.textAlign='center'; wx.textBaseline='middle';
+      wx.fillText(it.name,300,2); wx.restore(); return;
+    }
+    const im=wImg(it.img), bx=104, cy=-258;
+    wx.fillStyle='#fff';wx.strokeStyle='#2b1a14';wx.lineWidth=5;wx.beginPath();wx.roundRect(-bx/2,cy-bx/2,bx,bx,20);wx.fill();wx.stroke();
+    if(im.complete&&im.naturalWidth){const s=88,ar=im.naturalWidth/im.naturalHeight,w=ar>1?s:s*ar,h=ar>1?s/ar:s;wx.drawImage(im,-w/2,cy-h/2,w,h)}
+    wx.fillStyle=col;wx.font='37px Jua';wx.textAlign='center';wx.textBaseline='middle';
+    const ws=it.name.split(' '), lines=ws.length>2?[ws.slice(0,-1).join(' '),ws[ws.length-1]]:ws;
+    const mid=g.a0+g.d/2, yc=lines.length>1?-364:-376, lh=40;
+    wx.save(); if(mid>90&&mid<270){wx.translate(0,yc);wx.rotate(Math.PI);wx.translate(0,-yc);}
+    lines.forEach((t,k)=>wx.fillText(t,0,yc+(k-(lines.length-1)/2)*lh)); wx.restore();
     wx.restore();
   });
 }
@@ -1070,8 +1082,8 @@ $('spinBtn').onclick=async function(){
   const t0=performance.now(); const speed=26;
   await new Promise(res=>{(function f(t){ rot+=speed; setRot(); if(result&&t-t0>=500) return res(); requestAnimationFrame(f);})(performance.now())});
   if(!result.ok){ spinning=false; this.disabled=false; $('roulMsg').textContent=result.err; noticeModal('앗! 룰렛이 멈췄어요',esc(result.err)); if(result.state) applyState(result.state); return; }
-  const n=S.roul.length, i=result.result.index, segA=360/n;
-  const want=-(i*segA+segA/2)+(Math.random()-.5)*segA*.6;
+  const g=wheelSegs()[result.result.index];
+  const want=-(g.a0+g.d/2)+(Math.random()-.5)*g.d*.6;
   let target=rot+200; target=target-((target%360)+360)%360+((want%360)+360)%360; if(target<rot+200) target+=360;
   const start=rot, dist=target-start, dur=500, ts=performance.now();
   await new Promise(res=>{(function f(t){const p=Math.min(1,(t-ts)/dur), e=1-Math.pow(1-p,3); rot=start+dist*e; setRot(); if(p<1) requestAnimationFrame(f); else res();})(ts)});

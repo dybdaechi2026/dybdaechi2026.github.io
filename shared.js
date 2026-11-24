@@ -4,7 +4,7 @@ var HEADERS = {
   users:  ['이름','비밀번호','포인트','학년','담임'],
   orders: ['지급완료','시간','주문번호','이름','상품ID','상품명','수량','단가','금액','주문후포인트','학생코드'],
   box:    ['등급','상품명','이미지','가중치','남은수량','처음수량'],
-  roul:   ['칸','상품명','이미지','남은수량'],
+  roul:   ['칸','표시','상품명','이미지','확률','남은수량'],
   wins:   ['지급완료','시간','이름','게임','등급','상품명','이미지','학생코드'],
   letters:['선생님','학생 이름','내용','학년','시간','편지에 쓴 이름','명단 담임','지급포인트','학생코드'],
   comments:['시간','학년','이름','내용','상태','지급포인트','학생코드'],
@@ -24,7 +24,7 @@ var SEED = {
     ['ticket_rps','참가권','선생님과 가위바위보 참가권',500,100,1,'ticket_rps','Y','선생님과 가위바위보를 해서 이기면 특별 간식 제공!'],
     ['cp_word','쿠폰','단어커트 +5',2500,100,1,'cp_word','Y',''],
     ['cp_oral','쿠폰','구두 면제권',3000,100,1,'cp_oral','Y',''],
-    ['cp_hw','쿠폰','한과목 숙제 면제권',4000,100,1,'cp_hw','Y',''],
+    ['cp_hw','쿠폰','한과목 숙제 면제권',4000,100,1,'cp_hw','숨김',''],
     ['cp_retest','쿠폰','재시험 면제권',4500,100,1,'cp_retest','Y',''],
     ['snack_b','간식','이브의 랜덤 짭짤 과자',1500,100,'','snack_b','Y','이브가 고른 짭짤한 과자 중 하나를 랜덤으로 받아요!'],
     ['snack_c','간식','와비의 랜덤 달콤 과자',1500,100,'','snack_c','Y','와비가 고른 달콤한 과자 중 하나를 랜덤으로 받아요!'],
@@ -42,17 +42,27 @@ var SEED = {
     ['김민준','1234',10000,'샘플',''],['이서연','1234',10000,'샘플',''],['박지호','1234',10000,'샘플',''],['최하은','1234',10000,'샘플',''],['정도윤','1234',10000,'샘플',''],
     ['강서윤','1234',10000,'샘플',''],['조예준','1234',10000,'샘플',''],['윤지우','1234',10000,'샘플',''],['장시우','1234',10000,'샘플',''],['임하린','1234',10000,'샘플','']
   ],
+  // 가중치 = 확률(%)
   box: [
-    ['1등','배달의민족 3만원권','baemin',1,1,1],
-    ['2등','크리스마스 불빛 반지','ring',5,100,100],
-    ['2등','크리스마스 스쿼시','squishy',5,100,100],
-    ['3등','랜덤 지우개','eraser_gacha',15,100,100],
-    ['3등','크리스마스 4색 볼펜','charpen',15,100,100],
-    ['4등','디비의 랜덤 사탕과 젤리','snack_a',59,100,100]
+    ['1등','배달의 민족 3만원권','baemin',1,3,3],
+    ['2등','한과목 숙제 면제권','cp_hw',4,100,100],
+    ['3등','이브의 랜덤 짭짤 과자','snack_b',10,100,100],
+    ['4등','크리스마스 사탕','lollipop',15,100,100],
+    ['5등','랜덤 필기구','stationery_rand',30,100,100],
+    ['6등','구두 면제권','cp_oral',40,100,100]
   ],
+  // 칸, 표시(룰렛 글자), 상품명(시트·당첨 기록), 이미지(비우면 글자만 + 작은 칸), 확률(%), 남은수량
   roul: [
-    [1,'디비의 랜덤 사탕과 젤리','snack_a',100],[2,'이브의 랜덤 짭짤 과자','snack_b',100],[3,'랜덤 연필','pencil_rand',100],
-    [4,'와비의 랜덤 달콤 과자','snack_c',100],[5,'형광펜','highlighter',100],[6,'단어커트 +5','cp_word',100]
+    [1,'랜덤 연필','랜덤 연필','pencil_rand',10,100],
+    [2,'랜덤 사탕','디비의 랜덤 사탕과 젤리','snack_a',10,100],
+    [3,'랜덤 달콤과자','와비의 랜덤 달콤 과자','snack_c',10,100],
+    [4,'구두 면제권','구두 면제권','cp_oral',10,100],
+    [5,'재시험 면제권','재시험 면제권','cp_retest',10,100],
+    [6,'단어 커트 +5','단어커트 +5','cp_word',10,100],
+    [7,'한번 더','한번 더','again',10,9999],
+    [8,'랜덤 지우개','랜덤 지우개','eraser_gacha',10,100],
+    [9,'꽝','꽝','miss',19,9999],
+    [10,'전체 숙제 면제권','전체 숙제 면제권','',1,100]
   ]
 };
 
@@ -60,7 +70,9 @@ function E_num(v){ var n = Number(v); return isNaN(n) ? 0 : n; }
 function E_str(v){ return v === null || v === undefined ? '' : String(v).trim(); }
 function E_mark(o,k){ (o._dirty = o._dirty || []).indexOf(k) < 0 && o._dirty.push(k); }
 function E_limit(i){ var l = E_num(i['1인최대']); return E_str(i['카테고리']) === '쿠폰' ? (l > 0 ? Math.min(l,1) : 1) : l; }
-function E_onSale(i){ return E_str(i['판매']).toUpperCase() !== 'N' && E_str(i['ID']) !== ''; }
+function E_hidden(i){ return E_str(i['판매']) === '숨김'; }
+function E_onSale(i){ var s = E_str(i['판매']).toUpperCase(); return s !== 'N' && s !== '숨김' && E_str(i['ID']) !== ''; }
+var ROUL_AGAIN = '한번 더', ROUL_MISS = '꽝';
 
 function E_pw(v){ return E_str(v).replace(/\s/g,'').toUpperCase(); }
 function E_key(u){ return E_str(u['이름']) + '|' + E_pw(u['비밀번호']); }
@@ -78,7 +90,8 @@ function E_bought(db, u, id){
   return db.orders.reduce(function(s,o){ return (E_isMe(o,u) && E_str(o['상품ID'])===id) ? s + E_num(o['수량']) : s; }, 0);
 }
 function E_used(db, u, game){
-  return db.wins.filter(function(w){ return E_isMe(w,u) && E_str(w['게임'])===game; }).length;
+  // '한번 더'는 참가권을 쓰지 않은 것으로 쳐요 (= 참가권 1장 돌려받기)
+  return db.wins.filter(function(w){ return E_isMe(w,u) && E_str(w['게임'])===game && E_str(w['상품명'])!==ROUL_AGAIN; }).length;
 }
 function E_tickets(db, u){
   return { box: E_bought(db,u,'ticket_box') - E_used(db,u,'랜덤박스'),
@@ -88,13 +101,13 @@ function E_state(db, u){
   var name = E_str(u['이름']);
   return {
     user: { name: name, points: E_num(u['포인트']), tickets: E_tickets(db,u), grade: E_str(u['학년']), teacher: E_str(u['담임']) },
-    items: db.items.filter(function(i){ return E_str(i['ID']) !== ''; }).map(function(i){ var id=E_str(i['ID']), st=E_stock(db,i); return { off: !E_onSale(i), prep: E_num(i['가격']) <= 0,
+    items: db.items.filter(function(i){ return E_str(i['ID']) !== '' && !E_hidden(i); }).map(function(i){ var id=E_str(i['ID']), st=E_stock(db,i); return { off: !E_onSale(i), prep: E_num(i['가격']) <= 0,
       id:id, cat:E_str(i['카테고리']), name:E_str(i['이름']), price:E_num(i['가격']), stock:st.day, base:st.base,
       limit:E_limit(i), img:E_str(i['이미지']), desc:E_str(i['설명']), mine:E_bought(db,u,id) }; }),
     box: db.box.filter(function(b){ return E_str(b['상품명']); }).map(function(b){ var l = E_num(b['남은수량']); return {grade:E_str(b['등급']), name:E_str(b['상품명']), img:E_str(b['이미지']), left:l, init:Math.max(E_num(b['처음수량']), l)}; }),
-    roul: db.roul.filter(function(r){ return E_str(r['상품명']); }).map(function(r){ return {name:E_str(r['상품명']), img:E_str(r['이미지']), left:E_num(r['남은수량'])}; }),
+    roul: db.roul.filter(function(r){ return E_str(r['상품명']); }).map(function(r){ return {name:E_str(r['표시']) || E_str(r['상품명']), full:E_str(r['상품명']), img:E_str(r['이미지']), left:E_num(r['남은수량'])}; }),
     wins: (function(){ var m = function(w){ return {t:E_str(w['시간']), who:E_who(db,w), nm:E_mask(w['이름']), g:E_gradeOf(db,w), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; };
-      var top = db.wins.filter(function(w){ return E_str(w['등급']) === '1등'; }), rest = db.wins.slice(-60).filter(function(w){ return E_str(w['등급']) !== '1등'; });
+      var top = db.wins.filter(function(w){ return E_str(w['등급']) === '1등'; }), rest = db.wins.filter(function(w){ var n = E_str(w['상품명']); return n !== ROUL_MISS && n !== ROUL_AGAIN; }).slice(-60).filter(function(w){ return E_str(w['등급']) !== '1등'; });
       return top.reverse().map(m).concat(rest.reverse().map(m)); })(),
     popular: E_popular(db),
     pools: db.pools || {},
@@ -135,15 +148,15 @@ function E_play(db, req, now, rand){
   if ((isRoul ? t.roul : t.box) < 1) throw new Error(game + ' 참가권이 없어요! 마켓에서 참가권을 먼저 사 주세요 🎟️');
   var list = isRoul ? db.roul.filter(function(r){ return E_str(r['상품명']); }) : db.box.filter(function(b){ return E_str(b['상품명']); });
   var cand = [];
-  list.forEach(function(r,i){ if (E_num(r['남은수량']) > 0 && (isRoul || E_num(r['가중치']) > 0)) cand.push(i); });
+  var wk = isRoul ? '확률' : '가중치';
+  var useW = !isRoul || list.some(function(r){ return E_str(r['확률']) !== ''; });
+  var wt = function(r){ return useW ? E_num(r[wk]) : 1; };
+  list.forEach(function(r,i){ if (E_num(r['남은수량']) > 0 && wt(r) > 0) cand.push(i); });
   if (!cand.length) throw new Error('상품이 모두 소진되었어요. 선생님께 알려 주세요!');
   var idx;
-  if (isRoul) idx = cand[Math.floor(rand() * cand.length)];
-  else {
-    var tw = cand.reduce(function(s,i){ return s + E_num(list[i]['가중치']); }, 0), x = rand() * tw;
-    idx = cand[cand.length-1];
-    for (var k = 0; k < cand.length; k++){ x -= E_num(list[cand[k]]['가중치']); if (x < 0){ idx = cand[k]; break; } }
-  }
+  var tw = cand.reduce(function(s,i){ return s + wt(list[i]); }, 0), x = rand() * tw;
+  idx = cand[cand.length-1];
+  for (var k = 0; k < cand.length; k++){ x -= wt(list[cand[k]]); if (x < 0){ idx = cand[k]; break; } }
   var row = list[idx];
   row['남은수량'] = E_num(row['남은수량']) - 1; E_mark(row,'남은수량');
   var w = {'시간':now,'이름':name,'게임':game,'등급':E_str(row['등급']),'상품명':E_str(row['상품명']),'이미지':E_str(row['이미지']),'학생코드':E_key(u)};
