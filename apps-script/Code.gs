@@ -396,6 +396,7 @@ function migrate_(ss) {
       it.insertRowAfter(at); it.getRange(at + 1, 1, 1, h.length).setValues([row]);
     }
   }
+  try { renameBuyPool_(ss); } catch (x) {}
   // 2-1) 랜덤 간식 이름 변경 (ID 기준)
   var NEWNM = {'snack_a':'디비의 랜덤 사탕과 젤리','snack_b':'이브의 랜덤 짭짤 과자','snack_c':'와비의 랜덤 달콤 과자'};
   var OLDNM = {'랜덤 사탕 or 젤리':'snack_a','추억의 옛날과자 (짭짤)':'snack_b','추억의 옛날과자 (달콤)':'snack_c'};
@@ -456,11 +457,34 @@ function loadPools_(ss) {
   sh.getRange(4,1,sh.getLastRow()-3,h.length).getValues().forEach(function(r){
     var nm = String(r[nc]).trim(), cat = String(r[cc]).trim(), target = BUY_POOL[cat];
     if (!nm || !target) return;
-    var label = (/미정/.test(nm) && /과자/.test(cat)) ? cat : nm;
+    var label = poolLabel_(nm, cat);
     out[target] = out[target] || [];
     if (out[target].indexOf(label) < 0) out[target].push(label);
   });
   return out;
+}
+
+/** '추억의 옛날과자 (짭짤) - 차카니' → '차카니', '랜덤 사탕 or 젤리 (하리보)' → '하리보' */
+function poolLabel_(nm, cat) {
+  if (/미정/.test(nm) && /과자/.test(cat)) return cat;
+  var m = nm.match(/-\s*(.+)$/); if (m) return m[1].trim();
+  m = nm.match(/\(([^()]+)\)\s*$/); if (m && !/짭짤|달콤/.test(m[1])) return m[1].trim();
+  return nm;
+}
+/** [물품 구매] 탭의 임시 과자 이름을 실제 이름으로 바꿔요 (한 번만) */
+function renameBuyPool_(ss) {
+  var sh = ss.getSheetByName(BUY_TAB); if (!sh || sh.getLastRow() < 4) return;
+  var h = sh.getRange(3,1,1,2).getValues()[0].map(function(x){ return String(x).trim(); }); if (h[0] !== '물품') return;
+  var MAP = {'짭짤과자 A':'추억의 옛날과자 (짭짤) - 차카니','짭짤과자 B':'추억의 옛날과자 (짭짤) - 네모스낵',
+    '달콤과자 A':'추억의 옛날과자 (달콤) - 초코 팅촉','달콤과자 B':'추억의 옛날과자 (달콤) - 꾀돌이'};
+  var CANDY = {'다믈라 젤리':'랜덤 사탕 or 젤리 (하리보)','젤리 (미정)':'랜덤 사탕 or 젤리 (새콤짱)'};
+  var v = sh.getRange(4,1,sh.getLastRow()-3,2).getValues();
+  v.forEach(function(r, i){
+    var nm = String(r[0]).trim(), cat = String(r[1]).trim(), nn = null;
+    if (MAP[cat] && /미정/.test(nm)) nn = MAP[cat];
+    else if (cat === '사탕/젤리' && CANDY[nm]) nn = CANDY[nm];
+    if (nn) sh.getRange(i+4, 1).setValue(nn);
+  });
 }
 
 /* ===== 학년 명단 (다른 선생님들이 입력) → 학생 탭 자동 반영 ===== */
@@ -924,8 +948,9 @@ var BUY_POOL = {'사탕/젤리':'디비의 랜덤 사탕과 젤리','짭짤과�
   '달콤과자 A':'와비의 랜덤 달콤 과자','달콤과자 B':'와비의 랜덤 달콤 과자','랜덤 연필':'랜덤 연필','랜덤 지우개':'랜덤 지우개 뽑기'};
 var BUY_SEED = [
   ['단어커트 +5','면제권'],['구두 면제권','면제권'],['한과목 숙제 면제권','면제권'],['재시험 면제권','면제권'],
-  ['다믈라 젤리','사탕/젤리'],['젤리 (미정)','사탕/젤리'],
-  ['과자 미정','짭짤과자 A'],['과자 미정','짭짤과자 B'],['과자 미정','달콤과자 A'],['과자 미정','달콤과자 B'],
+  ['랜덤 사탕 or 젤리 (하리보)','사탕/젤리'],['랜덤 사탕 or 젤리 (새콤짱)','사탕/젤리'],
+  ['추억의 옛날과자 (짭짤) - 차카니','짭짤과자 A'],['추억의 옛날과자 (짭짤) - 네모스낵','짭짤과자 B'],
+  ['추억의 옛날과자 (달콤) - 초코 팅촉','달콤과자 A'],['추억의 옛날과자 (달콤) - 꾀돌이','달콤과자 B'],
   ['크리스마스 4색 볼펜','문구'],['크리스마스 연필','랜덤 연필'],['DYB 연필','랜덤 연필'],['형광펜','문구'],['수정테이프','문구'],['볼펜','문구'],
   ['크리스마스 불빛 반지','굿즈'],['크리스마스 스쿼시','굿즈'],['치이카와 지우개','랜덤 지우개'],['짱구 지우개','랜덤 지우개']
 ];
