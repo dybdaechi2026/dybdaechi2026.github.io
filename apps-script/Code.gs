@@ -1122,6 +1122,7 @@ function 룰렛박스새구성적용() {
   [['roul', SEED.roul], ['box', SEED.box]].forEach(function(p){
     var sh = ss.getSheetByName(TAB_NAMES[p[0]]); if (!sh) return;
     if (sh.getLastRow() > 0) sh.copyTo(ss).setName(TAB_NAMES[p[0]] + '_백업_' + stamp);
+    sh.getRange(1,1,sh.getMaxRows(),sh.getMaxColumns()).clearDataValidations();  // 칸이 옮겨지면서 예전 '숫자만' 규칙에 걸리지 않게
     ensureCols_(sh, HEADERS[p[0]]); reorderCols_(sh, HEADERS[p[0]]);
     var h = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
     if (sh.getLastRow() > 1) sh.getRange(2,1,sh.getLastRow()-1,h.length).clearContent();
