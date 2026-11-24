@@ -1046,6 +1046,9 @@ function wheelSegs(){ const W=S.roul, ns=W.filter(w=>!w.img).length, nb=W.length
 const wImgCache={};
 function wImg(k){ if(!wImgCache[k]){const im=new Image();im.onload=()=>{if(!spinning)drawWheel(0)};im.src=imgSrc(k);wImgCache[k]=im} return wImgCache[k]; }
 let rot=0,spinning=false;
+function wText(t,x,y,col){ // 굵은 테두리 글씨
+  const light=/^#fff/i.test(col); wx.lineJoin='round'; wx.miterLimit=2;
+  wx.lineWidth=10; wx.strokeStyle=light?'#2b1a14':'#fff'; wx.strokeText(t,x,y); wx.fillStyle=col; wx.fillText(t,x,y); }
 function drawWheel(){
   if(!S||!S.roul.length) return; const W=S.roul, R=440, segs=wheelSegs(), rad=Math.PI/180; wx.clearRect(0,0,880,880);
   W.forEach((it,i)=>{
@@ -1055,21 +1058,22 @@ function drawWheel(){
     wx.save();wx.translate(R,R);wx.rotate(a0+seg/2+Math.PI/2);
     const col=it.left>0?SEGT[i%SEGT.length]:'#888';
     if(!it.img){ // 글자만 (작은 칸): 바깥쪽에서 안쪽으로 세로 글씨
-      wx.rotate(-Math.PI/2); wx.fillStyle=col; wx.font='27px Jua'; wx.textAlign='center'; wx.textBaseline='middle';
-      wx.fillText(it.name,300,2); wx.restore(); return;
+      wx.rotate(-Math.PI/2); wx.font='29px Jua'; wx.textAlign='center'; wx.textBaseline='middle';
+      wText(it.name,300,2,col); wx.restore(); return;
     }
     const im=wImg(it.img), bx=104, cy=-258;
     wx.fillStyle='#fff';wx.strokeStyle='#2b1a14';wx.lineWidth=5;wx.beginPath();wx.roundRect(-bx/2,cy-bx/2,bx,bx,20);wx.fill();wx.stroke();
     if(im.complete&&im.naturalWidth){const s=88,ar=im.naturalWidth/im.naturalHeight,w=ar>1?s:s*ar,h=ar>1?s/ar:s;wx.drawImage(im,-w/2,cy-h/2,w,h)}
-    wx.fillStyle=col;wx.font='37px Jua';wx.textAlign='center';wx.textBaseline='middle';
+    wx.font='41px Jua';wx.textAlign='center';wx.textBaseline='middle';
     const ws=it.name.split(' '), lines=ws.length>2?[ws.slice(0,-1).join(' '),ws[ws.length-1]]:ws;
-    const mid=g.a0+g.d/2, yc=lines.length>1?-364:-376, lh=40;
+    const mid=g.a0+g.d/2, yc=lines.length>1?-362:-374, lh=43;
     wx.save(); if(mid>90&&mid<270){wx.translate(0,yc);wx.rotate(Math.PI);wx.translate(0,-yc);}
-    lines.forEach((t,k)=>wx.fillText(t,0,yc+(k-(lines.length-1)/2)*lh)); wx.restore();
+    lines.forEach((t,k)=>wText(t,0,yc+(k-(lines.length-1)/2)*lh,col)); wx.restore();
     wx.restore();
   });
 }
 document.fonts&&document.fonts.ready.then(()=>drawWheel());
+document.fonts&&document.fonts.load('41px Jua').then(()=>{ if(!spinning) drawWheel(); });
 (function(){const wd=$('wdots');for(let i=0;i<20;i++){const d=document.createElement('i');d.style.transform=`rotate(${i/20*360}deg) translateY(calc(-1 * (min(270px, 42vw) + 17px)))`;wd.appendChild(d)}})();
 function setRot(){wc.style.transform=`rotate(${rot}deg)`}
 $('spinBtn').onclick=async function(){
