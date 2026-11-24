@@ -787,7 +787,7 @@ function mockInit(){
   mockDB.wins.push({'시간':'12/17 09:40:00','이름':'정도윤','게임':'랜덤박스','등급':'1등','상품명':'배달의민족 3만원권','이미지':'baemin','학생코드':''});
   mockDB.box[0]['남은수량']=0;
 
-  mockDB.pools={'랜덤 사탕 or 젤리':['다믈라 젤리','젤리 (미정)'],'추억의 옛날과자 (짭짤)':['짭짤과자 A','짭짤과자 B'],'추억의 옛날과자 (달콤)':['달콤과자 A','달콤과자 B'],'랜덤 연필':['크리스마스 연필','DYB 연필'],'랜덤 지우개 뽑기':['치이카와 지우개','짱구 지우개']};
+  mockDB.pools={'디비의 랜덤 사탕과 젤리':['다믈라 젤리','젤리 (미정)'],'이브의 랜덤 짭짤 과자':['짭짤과자 A','짭짤과자 B'],'와비의 랜덤 달콤 과자':['달콤과자 A','달콤과자 B'],'랜덤 연필':['크리스마스 연필','DYB 연필'],'랜덤 지우개 뽑기':['치이카와 지우개','짱구 지우개']};
   mockDB.users.forEach((u,i)=>{u['학년']=['4학년','5학년','6학년'][i%3];u['담임']=['박','최','이'][i%3]+'선생'});
   [['이서연','떡볶이가 진짜 맛있었어요!! 또 해 주세요 🌶️'],['박지호','선생님들 항상 감사합니다 ❤️'],['최하은','룰렛 돌리는 거 너무 재밌어요ㅎㅎ']].forEach(([n,t],k)=>
     mockDB.comments.push({'시간':`12/17 10:1${k}:00`,'학년':'','이름':n,'내용':t,'상태':'','학생코드':''}));
@@ -831,7 +831,7 @@ let me={name:'',pw:''}, S=null, cart={};
 const CATMETA={
   '참가권':{t:'Game Tickets',d:'룰렛·랜덤박스·가위바위보 참가권',ch:'chick',say:'게임 티켓은 3개까지만!'},
   '쿠폰':{t:'Coupons',d:'숙제·시험 면제권 (종류별 1장씩!)',ch:'cat_fish',say:'선생님 허락 받고 사용해줘!'},
-  '간식':{t:'Snack',d:'돋보기를 눌러서 뭐가 들었는지 보세요! 🔍',ch:'hamster_magni',say:'돋보기를 눌러서 뭐가 들었는지 보세요!'},
+  '간식':{t:'Snack',d:'이브·와비·디비가 준비한 랜덤 간식! 돋보기를 눌러서 뭐가 들었는지 보세요 🔍',ch:'hamster_magni',say:'돋보기를 눌러서 뭐가 들었는지 보세요!'},
   '굿즈':{t:'Christmas Goods',d:'반짝반짝 크리스마스 굿즈',ch:'cat',say:'뭐가 나올지 두근두근!'},
   '기타':{t:'Special Gifts',d:'특별한 크리스마스 선물',ch:'whale',say:'이건 뭘까? 궁금하지?'},
   '문구':{t:'Stationery',d:'귀여운 크리스마스 문구',ch:'rabbit_flower',say:'크리스마스 문구 GET!'},
@@ -859,7 +859,7 @@ function maxAddable(it){
 function renderShop(){
   const cats=[...CATORDER,...[...new Set(S.items.map(i=>i.cat))].filter(c=>!CATORDER.includes(c))];
   $('shopCats').innerHTML=cats.map(c=>{
-    const list=S.items.filter(i=>i.cat===c); if(!list.length) return '';
+    const ORD={snack_b:1,snack_c:2,snack_a:3}; const list=S.items.filter(i=>i.cat===c).sort((x,y)=>(ORD[x.id]||0)-(ORD[y.id]||0)); if(!list.length) return '';
     const m=CATMETA[c]||{t:c,d:'',ch:'turtle_happy',say:'구경해 봐!'};
     return `<div class="cat"><div class="cat-head"><img class="who" src="img/xmas/${m.ch}.webp" alt="">
       <div class="ribbon-title"><h3>${esc(m.t)}</h3><p>${esc(m.d)}</p></div><div class="bubble hand">${esc(m.say)}</div></div>
@@ -942,9 +942,9 @@ function renderPopular(){
 }
 /* 아직 과자가 안 정해진 랜덤 물품의 샘플 구성 */
 const SAMPLE_POOL={
-  '추억의 옛날과자 (짭짤)':[{n:'과자 이름 1',img:'img/items/sample_snack2.webp'},{n:'과자 이름 b',img:'img/items/sample_snack1.webp'}],
-  '추억의 옛날과자 (달콤)':[{n:'과자 이름 1',img:'img/items/sample_snack1.webp'},{n:'과자 이름 b',img:'img/items/sample_snack2.webp'}],
-  '랜덤 사탕 or 젤리':[{n:'과자 이름 1',img:'img/items/sample_snack1.webp'},{n:'과자 이름 b',img:'img/items/sample_snack2.webp'}]
+  '이브의 랜덤 짭짤 과자':[{n:'과자 이름 1',img:'img/items/sample_snack2.webp'},{n:'과자 이름 b',img:'img/items/sample_snack1.webp'}],
+  '와비의 랜덤 달콤 과자':[{n:'과자 이름 1',img:'img/items/sample_snack1.webp'},{n:'과자 이름 b',img:'img/items/sample_snack2.webp'}],
+  '디비의 랜덤 사탕과 젤리':[{n:'과자 이름 1',img:'img/items/sample_snack1.webp'},{n:'과자 이름 b',img:'img/items/sample_snack2.webp'}]
 };
 /* ================= MODAL ================= */
 function showModal(html,rays=false,jackpot=false,extra=''){
