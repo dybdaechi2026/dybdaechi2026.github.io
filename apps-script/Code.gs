@@ -36,7 +36,7 @@ var SEED = {
     ['pen','문구','볼펜',2500,100,'','pen','Y',''],
     ['ring','굿즈','크리스마스 불빛 반지',5000,100,'','ring','Y',''],
     ['squishy','굿즈','크리스마스 스쿼시',4000,100,'','squishy','Y',''],
-    ['eraser_gacha','굿즈','랜덤 지우개',3000,100,'','eraser_gacha','Y','치이카와 or 짱구 지우개 중 하나를 랜덤으로 받아요!']
+    ['eraser_gacha','굿즈','랜덤 지우개',3000,100,'','eraser_gacha','Y','치이카와 or 짱구 or DYB 지우개 중 하나를 랜덤으로 받아요!']
   ],
   users: [
     ['김민준','1234',10000,'샘플',''],['이서연','1234',10000,'샘플',''],['박지호','1234',10000,'샘플',''],['최하은','1234',10000,'샘플',''],['정도윤','1234',10000,'샘플',''],
@@ -480,10 +480,10 @@ function 초기재고반영() {
   if (!buy || !it || buy.getLastRow() < 4 || it.getLastRow() < 2) return;
   var bh = buy.getRange(3,1,1,buy.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
   var b = function(n){ return bh.indexOf(n); };
-  if (b('물품') < 0 || b('초기 재고') < 0) return;
+  if (b('물품') < 0 || b('구매량') < 0) return;
   var sum = {}, pools = {};
   buy.getRange(4,1,buy.getLastRow()-3,bh.length).getValues().forEach(function(r){
-    var nm = String(r[b('물품')]).trim(), cat = String(r[b('카테고리')]).trim(), q = r[b('초기 재고')];
+    var nm = String(r[b('물품')]).trim(), cat = String(r[b('카테고리')]).trim(), q = r[b('구매량')];
     if (!nm) return;
     if (b('판매 여부') >= 0 && String(r[b('판매 여부')]).trim().toUpperCase() === 'N') return;
     var target = BUY_POOL[cat] || nm;
@@ -503,7 +503,7 @@ function 초기재고반영() {
       if (String(r[dc]) !== desc) it.getRange(i+2, dc+1).setValue(desc);
     }
   });
-  it.getRange(1, ic+1).setNote('자동: [물품 구매] 탭 초기 재고에서 가져옴 (랜덤 묶음은 합계). 직접 고치려면 물품 구매 탭에서 수정');
+  it.getRange(1, ic+1).setNote('자동: [물품 구매] 탭 구매량에서 가져옴 (랜덤 묶음은 합계). 추가 주문 시 물품 구매 탭 구매량만 늘리면 자동 반영됨');
   재고반영();
 }
 
@@ -863,10 +863,10 @@ function 물품구매시트() {
   sh.setTabColor('#ff9800');
 
   sh.getRange('A1').setValue('🛒 물품 구매 · 예산 관리').setFontSize(18).setFontWeight('bold').setFontColor('#b50005');
-  sh.getRange('A2').setValue('흰 칸 직접 입력. 총액(개별 가격 × 구매량)·현 재고(물품 탭 연동)는 자동. 사용 예산 = 총액 합계. 판매 여부 N = 사이트 미판매(경품 등).').setFontColor('#777777').setFontSize(10);
+  sh.getRange('A2').setValue('흰 칸 직접 입력. 구매량 = 사이트 초기재고 (추가 주문 시 구매량만 늘리면 자동 반영). 총액·초기 재고·현 재고는 자동. 판매 여부 N = 사이트 미판매.').setFontColor('#777777').setFontSize(10);
 
   sh.getRange(3,1,1,BUY_H.length).setValues([BUY_H]).setFontWeight('bold').setFontColor('#ffffff').setHorizontalAlignment('center').setVerticalAlignment('middle');
-  sh.getRange(3,1,1,10).setBackground('#ff9800'); sh.getRange(3,6).setBackground('#9e9e9e'); sh.getRange(3,8).setBackground('#9e9e9e');
+  sh.getRange(3,1,1,10).setBackground('#ff9800'); sh.getRange(3,6).setBackground('#9e9e9e'); sh.getRange(3,7).setBackground('#9e9e9e'); sh.getRange(3,8).setBackground('#9e9e9e');
   sh.getRange(3,11,1,3).clearContent().clearFormat();
   sh.setRowHeight(3, 32); sh.setFrozenRows(3);
   [170,80,150,90,80,100,80,80,200,80].forEach(function(w,i){ sh.setColumnWidth(i+1, w); });
@@ -885,6 +885,8 @@ function 물품구매시트() {
     hF.push(['=IF($A' + r + '="","",IFERROR(INDEX(\'물품\'!$A:$Z, MATCH($A' + r + ', INDEX(\'물품\'!$A:$Z,0,MATCH("이름",\'물품\'!$1:$1,0)),0), MATCH("현재고",\'물품\'!$1:$1,0)),IFERROR(INDEX(\'물품\'!$A:$Z, MATCH(SWITCH($B' + r + ',"사탕/젤리","디비의 랜덤 사탕과 젤리","짭짤과자 A","이브의 랜덤 짭짤 과자","짭짤과자 B","이브의 랜덤 짭짤 과자","달콤과자 A","와비의 랜덤 달콤 과자","달콤과자 B","와비의 랜덤 달콤 과자","랜덤 연필","랜덤 연필","랜덤 지우개","랜덤 지우개 뽑기",""), INDEX(\'물품\'!$A:$Z,0,MATCH("이름",\'물품\'!$1:$1,0)),0), MATCH("현재고",\'물품\'!$1:$1,0)),"없음")))']);
   }
   sh.getRange(first,6,ROWS,1).setFormulas(fF);
+  var gF = []; for (var r2 = first; r2 <= last; r2++) gF.push(['=IF($E' + r2 + '="","",$E' + r2 + ')']);
+  sh.getRange(first,7,ROWS,1).setFormulas(gF);
   sh.getRange(first,8,ROWS,1).setFormulas(hF);
   var sv = sh.getRange(first,1,ROWS,10).getValues();
   sv.forEach(function(row, i){ if (String(row[0]).trim() && String(row[9]).trim() === '') sh.getRange(first+i,10).setValue('Y'); });
@@ -897,7 +899,7 @@ function 물품구매시트() {
   sh.getRange(first,4,ROWS,1).setNumberFormat('#,##0"원"');
   sh.getRange(first,5,ROWS,1).setNumberFormat('#,##0"개"');
   sh.getRange(first,6,ROWS,1).setNumberFormat('#,##0"원"').setBackground('#f3f3f3').setFontColor('#333333').setFontWeight('bold');
-  sh.getRange(first,7,ROWS,1).setNumberFormat('#,##0"개"');
+  sh.getRange(first,7,ROWS,1).setNumberFormat('#,##0"개"').setBackground('#f3f3f3').setFontColor('#555555');
   sh.getRange(first,8,ROWS,1).setNumberFormat('#,##0"개"').setBackground('#f3f3f3').setFontColor('#555555').setFontWeight('bold');
   sh.getRange(first,9,ROWS,1).setHorizontalAlignment('left').setFontColor('#1565c0').setNumberFormat('@');
 
@@ -914,15 +916,15 @@ function 물품구매시트() {
   }
   var num = SpreadsheetApp.newDataValidation().requireNumberGreaterThanOrEqualTo(0).setAllowInvalid(false).setHelpText('숫자만 입력 가능함').build();
   sh.getRange(first,4,ROWS,2).setDataValidation(num);
-  sh.getRange(first,7,ROWS,1).setDataValidation(num);
+  sh.getRange(first,7,ROWS,1).clearDataValidations();
   sh.getRange(first,10,ROWS,1).setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['Y','N'], true).setAllowInvalid(false).build());
   sh.getRange(3,1,1,13).clearNote();
   sh.getRange(3,1).setNote('[물품] 탭의 "이름"과 동일하게 입력 시 현 재고 자동 연동됨');
   sh.getRange(3,3).setNote('자유 입력 (예: 100개 / 10,000원). 계산에는 쓰이지 않음');
   sh.getRange(3,4).setNote('1개당 가격 직접 입력');
-  sh.getRange(3,5).setNote('실제 구매한 개수 직접 입력');
+  sh.getRange(3,5).setNote('실제 구매한 개수 직접 입력 (면제권은 재단한 매수). 사이트 초기재고로 자동 반영됨. 추가 주문 시 이 숫자를 늘리면 됨');
   sh.getRange(3,6).setNote('자동 계산: 개별 가격 × 구매량. 사용 예산은 이 칸의 합계임');
-  sh.getRange(3,7).setNote('사이트 판매 수량. 여기 입력하면 [물품] 탭 초기재고로 자동 반영됨 (랜덤 묶음은 합계). 면제권은 미리 재단한 매수 입력');
+  sh.getRange(3,7).setNote('자동: 구매량과 같음. [물품] 탭 초기재고로 자동 반영됨 (랜덤 묶음은 합계). 추가 주문 시 구매량만 늘리면 됨');
   sh.getRange(3,8).setNote('자동 연동: [물품] 탭의 현재고 (판매 시 차감됨). 랜덤 지급 묶음(사탕/젤리·짭짤/달콤과자·랜덤 연필·랜덤 지우개)은 사이트 판매 물품의 공통 재고로 표시됨. 사이트 미판매 물품은 "없음"');
   sh.getRange(3,9).setNote('구매처 주소 입력 (클릭 시 바로 열림)');
   sh.getRange(3,10).setNote('Y = 사이트 마켓에서 판매 / N = 사이트 미판매 (경품·현장 지급용). [물품 구매 목록 → 사이트 물품 맞추기] 실행 시 반영됨');
@@ -976,7 +978,7 @@ var BUY_SEED = [
   ['추억의 옛날과자 (짭짤) - 차카니','짭짤과자 A'],['추억의 옛날과자 (짭짤) - 꼬꼬스낵','짭짤과자 B'],
   ['추억의 옛날과자 (달콤) - 초코 팅촉','달콤과자 A'],['추억의 옛날과자 (달콤) - 꾀돌이','달콤과자 B'],
   ['크리스마스 4색 볼펜','문구'],['크리스마스 연필','랜덤 연필'],['DYB 연필','랜덤 연필'],['형광펜','문구'],['수정테이프','문구'],['볼펜','문구'],
-  ['크리스마스 불빛 반지','굿즈'],['크리스마스 스쿼시','굿즈'],['랜덤 지우개 (치이카와)','랜덤 지우개'],['랜덤 지우개 (짱구)','랜덤 지우개']
+  ['크리스마스 불빛 반지','굿즈'],['크리스마스 스쿼시','굿즈'],['랜덤 지우개 (치이카와)','랜덤 지우개'],['랜덤 지우개 (짱구)','랜덤 지우개'],['랜덤 지우개 (DYB)','랜덤 지우개']
 ];
 function 새물품목록적용() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), ui = null;
@@ -1075,10 +1077,11 @@ function 물품구매목록정리_(ss) {
     v[0] = sr[0]; v[1] = sr[1]; if (String(v[9]).trim() === '') v[9] = 'Y';
     return v;
   }).concat(extra);
-  if (n) { sh.getRange(first,1,n,5).clearContent(); sh.getRange(first,7,n,1).clearContent(); sh.getRange(first,9,n,2).clearContent(); }
+  if (n) { sh.getRange(first,1,n,5).clearContent(); sh.getRange(first,9,n,2).clearContent(); }
   if (out.length) {
     sh.getRange(first,1,out.length,5).setValues(out.map(function(r){ return r.slice(0,5); }));
-    sh.getRange(first,7,out.length,1).setValues(out.map(function(r){ return [r[6]]; }));
+    out.forEach(function(r){ if (r[4] === '' && r[6] !== '' && !isNaN(Number(r[6]))) r[4] = Number(r[6]); });  // 예전 초기 재고만 있던 줄은 구매량으로
+    sh.getRange(first,1,out.length,5).setValues(out.map(function(r){ return r.slice(0,5); }));
     sh.getRange(first,9,out.length,2).setValues(out.map(function(r){ return [r[8], r[9]]; }));
   }
 }
