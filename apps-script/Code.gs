@@ -36,7 +36,8 @@ var SEED = {
     ['pen','문구','볼펜',2500,100,'','pen','Y',''],
     ['ring','굿즈','크리스마스 불빛 반지',5000,100,'','ring','Y',''],
     ['squishy','굿즈','크리스마스 스쿼시',4000,100,'','squishy','Y',''],
-    ['eraser_gacha','굿즈','랜덤 지우개',3000,100,'','eraser_gacha','Y','치이카와 or 짱구 or DYB 지우개 중 하나를 랜덤으로 받아요!']
+    ['eraser_gacha','굿즈','랜덤 지우개',3000,100,'','eraser_gacha','Y','치이카와 or 짱구 or DYB 지우개 중 하나를 랜덤으로 받아요!'],
+    ['candy','간식','캔디 (담라)',0,100,'','damla','숨김','랜덤박스 7등 경품 (사이트 판매 X)']
   ],
   users: [
     ['김민준','1234',10000,'샘플',''],['이서연','1234',10000,'샘플',''],['박지호','1234',10000,'샘플',''],['최하은','1234',10000,'샘플',''],['정도윤','1234',10000,'샘플',''],
@@ -44,12 +45,13 @@ var SEED = {
   ],
   // 가중치 = 확률(%)
   box: [
-    ['1등','배달의 민족 3만원권','baemin',1,3,3],
-    ['2등','한과목 숙제 면제권','cp_hw',4,100,100],
-    ['3등','이브의 랜덤 짭짤 과자','snack_b',10,100,100],
-    ['4등','크리스마스 사탕','lollipop',15,100,100],
-    ['5등','랜덤 필기구','stationery_rand',30,100,100],
-    ['6등','구두 면제권','cp_oral',40,100,100]
+    ['1등','배달의 민족 3만원권','baemin',0.7,3,3],
+    ['2등','한과목 숙제 면제권','cp_hw',2.8,100,100],
+    ['3등','이브의 랜덤 짭짤 과자','snack_b',7,100,100],
+    ['4등','크리스마스 사탕','lollipop',10.5,100,100],
+    ['5등','랜덤 필기구','stationery_rand',21,100,100],
+    ['6등','구두 면제권','cp_oral',28,100,100],
+    ['7등','캔디','damla',30,100,100]
   ],
   // 칸, 표시(룰렛 글자), 상품명(시트·당첨 기록), 이미지(비우면 글자만 + 작은 칸), 확률(%), 남은수량
   roul: [
@@ -69,7 +71,8 @@ var SEED = {
 function E_num(v){ var n = Number(v); return isNaN(n) ? 0 : n; }
 function E_str(v){ return v === null || v === undefined ? '' : String(v).trim(); }
 function E_mark(o,k){ (o._dirty = o._dirty || []).indexOf(k) < 0 && o._dirty.push(k); }
-function E_limit(i){ var l = E_num(i['1인최대']); return E_str(i['카테고리']) === '쿠폰' ? (l > 0 ? Math.min(l,1) : 1) : l; }
+// 참가권 3종만 '1인최대'대로, 나머지 모든 물품은 종류별 1개까지
+function E_limit(i){ var l = E_num(i['1인최대']); return E_str(i['카테고리']) === '참가권' ? l : (l > 0 ? Math.min(l,1) : 1); }
 function E_hidden(i){ return E_str(i['판매']) === '숨김'; }
 function E_onSale(i){ var s = E_str(i['판매']).toUpperCase(); return s !== 'N' && s !== '숨김' && E_str(i['ID']) !== ''; }
 var ROUL_AGAIN = '한번 더', ROUL_MISS = '꽝';
@@ -498,7 +501,7 @@ function 초기재고반영() {
   buy.getRange(4,1,buy.getLastRow()-3,bh.length).getValues().forEach(function(r){
     var nm = String(r[b('물품')]).trim(), cat = String(r[b('카테고리')]).trim(), q = r[b('구매량')];
     if (!nm) return;
-    if (b('판매 여부') >= 0 && String(r[b('판매 여부')]).trim().toUpperCase() === 'N') return;
+    // 판매 여부 N이어도 [물품] 탭에 같은 이름(숨김 등)이 있으면 재고는 맞춰 둠
     var target = BUY_POOL[cat] || nm;
     if (q === '' || isNaN(Number(q))) return;
     sum[target] = (sum[target] || 0) + Number(q);
@@ -660,6 +663,7 @@ function onOpen() {
     .addItem('물품 구매 탭 만들기/정리하기', '물품구매시트')
     .addItem('★ 새 물품 목록 적용 (물품·물품 구매·경품)', '새물품목록적용')
     .addItem('★ 룰렛·랜덤박스 새 구성 적용', '룰렛박스새구성적용')
+    .addItem('★ 랜덤박스 7등 캔디 추가', '랜덤박스캔디추가')
     .addSeparator()
     .addItem('지금 탭: 이름순 정렬 (가나다)', '이름순정렬')
     .addItem('지금 탭: 선생님 → 이름순 정렬 (명단·편지)', '담임순정렬')
@@ -687,7 +691,7 @@ function 꾸미기() {
   명단반영();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var NOTES = {
-    items: {'ID':'사이트가 물건을 구분하는 이름표예요. 이미 팔린 물건은 바꾸지 마세요!','카테고리':'참가권 / 쿠폰 / 간식 / 문구 / 굿즈 중 하나','설명':'적어 두면 사이트 물건 이름 옆에 ? 버튼이 생기고, 누르면 이 설명이 보여요','초기재고':'처음 준비한 전체 수량 (직접 입력)','현재고':'자동: 초기재고 − 지금까지 팔린 수량','당일판매수량':'오늘 팔 수량 (직접 입력). 비워 두면 현재고만큼 팔아요','당일재고':'자동: 당일판매수량 − 오늘 팔린 수량. 사이트에는 이 숫자로 남은 정도가 보여요','이름':'사이트에 보이는 물건 이름','가격':'숫자만 (예: 3000)','1인최대':'한 사람이 살 수 있는 최대 개수. 비워 두면 제한 없음','이미지':'사진 파일 이름 (보통 ID와 같아요)','판매':'Y = 판매 / N = 사이트에 회색 매진 카드로 보임 / 숨김 = 사이트 목록에서 아예 안 보임 (뽑기·룰렛 전용 상품)'},
+    items: {'ID':'사이트가 물건을 구분하는 이름표예요. 이미 팔린 물건은 바꾸지 마세요!','카테고리':'참가권 / 쿠폰 / 간식 / 문구 / 굿즈 중 하나','설명':'적어 두면 사이트 물건 이름 옆에 ? 버튼이 생기고, 누르면 이 설명이 보여요','초기재고':'처음 준비한 전체 수량 (직접 입력)','현재고':'자동: 초기재고 − 지금까지 팔린 수량','당일판매수량':'오늘 팔 수량 (직접 입력). 비워 두면 현재고만큼 팔아요','당일재고':'자동: 당일판매수량 − 오늘 팔린 수량. 사이트에는 이 숫자로 남은 정도가 보여요','이름':'사이트에 보이는 물건 이름','가격':'숫자만 (예: 3000)','1인최대':'참가권만 적용 (비우면 제한 없음). 참가권 외 물품은 자동으로 1인 1개','이미지':'사진 파일 이름 (보통 ID와 같아요)','판매':'Y = 판매 / N = 사이트에 회색 매진 카드로 보임 / 숨김 = 사이트 목록에서 아예 안 보임 (뽑기·룰렛 전용 상품)'},
     users: {'이름':'학생이 입장할 때 쓰는 이름. 같은 이름 두 명은 안 돼요!','비밀번호':'초대장 번호','포인트':'남은 포인트. 주문하면 자동으로 줄어요'},
     box:   {'등급':'1등, 2등 …','가중치':'숫자가 클수록 잘 나와요 (확률)','남은수량':'0이 되면 더 이상 안 나와요'},
     roul:  {'칸':'룰렛 칸 번호 (순서)','표시':'룰렛 판에 보이는 짧은 글자','상품명':'당첨 기록에 남는 원래 이름','이미지':'비워 두면 그림 없이 글자만, 작은 칸이 돼요','확률':'뽑힐 확률(%). 합이 100이 아니어도 비율대로 뽑아요. 칸 크기와는 상관없어요','남은수량':'0이 되면 회색 칸이 되고 안 나와요'},
@@ -760,7 +764,7 @@ function 꾸미기() {
       sh.setFrozenColumns(2); if (sh.getFilter()) sh.getFilter().remove(); sh.getRange(1,1,sh.getMaxRows(),n).createFilter(); }
     if (k === 'comments') { var cc = body('내용'); if (cc) { cc.setWrap(true).setHorizontalAlignment('left'); sh.setColumnWidth(col('내용'), 320); } }
     if (k === 'box') {
-      var gr = body('등급'); if (gr) gr.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['1등','2등','3등','4등','5등','6등'], true).setAllowInvalid(true).build());
+      var gr = body('등급'); if (gr) gr.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['1등','2등','3등','4등','5등','6등','7등'], true).setAllowInvalid(true).build());
     }
 
     // colour rules
@@ -995,7 +999,7 @@ var BUY_SEED = [
   ['크리스마스 4색 볼펜','문구'],['크리스마스 연필','랜덤 연필'],['DYB 연필','랜덤 연필'],['형광펜','문구'],['수정테이프','문구'],['볼펜','문구'],
   ['크리스마스 불빛 반지','굿즈'],['크리스마스 스쿼시','굿즈'],['랜덤 지우개 (치이카와)','랜덤 지우개'],['랜덤 지우개 (짱구)','랜덤 지우개'],['랜덤 지우개 (DYB)','랜덤 지우개'],
   // 경품 (사이트 판매 X): [이름, 카테고리, 판매 여부, 개별 가격, 구매량]
-  ['배달의 민족 3만원권','경품','N',30000,3],['크리스마스 사탕','경품','N']
+  ['배달의 민족 3만원권','경품','N',30000,3],['크리스마스 사탕','경품','N'],['캔디 (담라)','경품','N']
 ];
 function 새물품목록적용() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), ui = null;
@@ -1151,4 +1155,42 @@ function 룰렛박스새구성적용() {
   });
   Logger.log('룰렛·랜덤박스 새 구성 적용 완료');
   try { SpreadsheetApp.getUi().alert('완료됨', '룰렛·랜덤박스 새 구성 적용 완료. (이전 내용은 _백업_ 탭에 있음)\n확률은 [룰렛] 탭 확률, [랜덤박스] 탭 가중치 칸에서 바꿀 수 있음.', SpreadsheetApp.getUi().ButtonSet.OK); } catch (x) {}
+}
+
+/** ★ 랜덤박스 7등 캔디 추가: 1~7등 확률 갱신 · [물품] 탭 캔디 (담라) 숨김 줄 · [물품 구매] 캔디 줄. 여러 번 실행해도 안전 */
+function 랜덤박스캔디추가() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  setup();
+  // 1) 랜덤박스 탭: 등급별 확률(가중치) 갱신, 없는 등급은 추가 (남은수량은 그대로)
+  var bx = ss.getSheetByName(TAB_NAMES.box);
+  if (bx) {
+    bx.getRange(1,1,bx.getMaxRows(),bx.getMaxColumns()).clearDataValidations();
+    var h = bx.getRange(1,1,1,bx.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
+    var gc = h.indexOf('등급'), wc = h.indexOf('가중치');
+    var rows = bx.getLastRow() > 1 ? bx.getRange(2,1,bx.getLastRow()-1,h.length).getValues() : [];
+    SEED.box.forEach(function(sr){
+      var o = {}; HEADERS.box.forEach(function(k,i){ o[k] = sr[i]; });
+      var at = -1; rows.forEach(function(r, i){ if (String(r[gc]).trim() === o['등급']) at = i; });
+      if (at >= 0) bx.getRange(at+2, wc+1).setValue(o['가중치']);
+      else { bx.getRange(bx.getLastRow()+1, 1, 1, h.length).setValues([h.map(function(k){ return o[k] === undefined ? '' : o[k]; })]); }
+    });
+  }
+  // 2) 물품 탭: 캔디 (담라) 숨김 줄 추가
+  var it = ss.getSheetByName(TAB_NAMES.items);
+  if (it) {
+    var ih = it.getRange(1,1,1,it.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
+    var ids = it.getLastRow() > 1 ? it.getRange(2, ih.indexOf('ID')+1, it.getLastRow()-1, 1).getValues().map(function(r){ return String(r[0]).trim(); }) : [];
+    if (ids.indexOf('candy') < 0) {
+      var sr = E_seedItems().filter(function(r){ return r[0] === 'candy'; })[0], o = {};
+      HEADERS.items.forEach(function(k,i){ o[k] = sr[i]; });
+      var row = it.getLastRow() + 1;
+      it.getRange(row,1,1,ih.length).clearDataValidations();
+      it.getRange(row,1,1,ih.length).setValues([ih.map(function(k){ return o[k] === undefined ? '' : o[k]; })]);
+    }
+  }
+  // 3) 물품 구매 탭: 캔디 줄 + 초기재고 연동
+  var buy = ss.getSheetByName(BUY_TAB); if (buy) buy.copyTo(ss).setName(BUY_TAB + '_백업_' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'MMdd_HHmm'));
+  물품구매목록정리_(ss); 물품구매시트(); 초기재고반영();
+  Logger.log('랜덤박스 캔디 추가 완료');
+  try { SpreadsheetApp.getUi().alert('완료됨', '랜덤박스 7등 캔디 추가 및 확률 갱신 완료. 시간 될 때 [시트 꾸미기] 한 번 실행 권장.', SpreadsheetApp.getUi().ButtonSet.OK); } catch (x) {}
 }
