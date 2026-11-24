@@ -876,7 +876,7 @@ function fitBubbles(){
     const sp=b.querySelector('span'), sv=b.querySelector('svg'); if(!sp||!sv) return;
     const w=sp.offsetWidth; if(!w) return;
     const x0=14, y0=3, H=50, r=H/2, x1=w-2;
-    const d=`M${x0+r} ${y0} H${x1-r} A${r} ${r} 0 0 1 ${x1-r} ${y0+H} H${x0+r+10} Q${x0+12} ${y0+H} 2 ${y0+H+5} Q${x0+4} ${y0+H-6} ${x0+3} ${y0+35} A${r} ${r} 0 0 1 ${x0+r} ${y0} Z`;
+    const d=`M${x0+r} ${y0} H${x1-r} A${r} ${r} 0 0 1 ${x1-r} ${y0+H} H${x0+r+10} Q${x0+12} ${y0+H} 8 ${y0+H+5} Q1 ${y0+H+6} 4 ${y0+H} Q${x0+3} ${y0+H-8} ${x0+3} ${y0+35} A${r} ${r} 0 0 1 ${x0+r} ${y0} Z`;
     sv.setAttribute('width',w); sv.setAttribute('height',H+12); sv.setAttribute('viewBox',`0 0 ${w} ${H+12}`);
     sv.innerHTML=`<path d="${d}" fill="#2b1a14" transform="translate(0,4)"/><path d="${d}" fill="#fff" stroke="#2b1a14" stroke-width="3.5" stroke-linejoin="round"/>`;
   });
