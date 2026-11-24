@@ -1139,8 +1139,15 @@ function 룰렛박스새구성적용() {
   }
   // 3) 물품 구매 탭: 경품 줄 추가 + 한과목/전체 숙제 면제권 판매 여부 N
   var buy = ss.getSheetByName(BUY_TAB); if (buy) buy.copyTo(ss).setName(BUY_TAB + '_백업_' + stamp);
-  물품구매목록정리_(ss);
-  꾸미기();
+  물품구매목록정리_(ss); 물품구매시트(); 초기재고반영();
+  // 룰렛·랜덤박스 탭 간단 서식 (전체 꾸미기는 오래 걸려서 따로)
+  [TAB_NAMES.roul, TAB_NAMES.box].forEach(function(tn){
+    var sh = ss.getSheetByName(tn); if (!sh) return;
+    var h = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
+    var pc = h.indexOf(tn === TAB_NAMES.roul ? '확률' : '가중치') + 1;
+    if (pc > 0) sh.getRange(1, pc).setNote(tn === TAB_NAMES.roul ? '뽑힐 확률(%). 칸 크기와 상관없음' : '뽑힐 확률(%)');
+    var ic = h.indexOf('이미지') + 1; if (ic > 0 && tn === TAB_NAMES.roul) sh.getRange(1, ic).setNote('비워 두면 그림 없이 글자만, 작은 칸');
+  });
   Logger.log('룰렛·랜덤박스 새 구성 적용 완료');
   try { SpreadsheetApp.getUi().alert('완료됨', '룰렛·랜덤박스 새 구성 적용 완료. (이전 내용은 _백업_ 탭에 있음)\n확률은 [룰렛] 탭 확률, [랜덤박스] 탭 가중치 칸에서 바꿀 수 있음.', SpreadsheetApp.getUi().ButtonSet.OK); } catch (x) {}
 }
