@@ -612,7 +612,7 @@ footer{position:relative;z-index:2;margin-top:70px}
         <div class="rule">
           <h3>Notice <small>상품 구매 시 유의사항</small></h3>
           <ol>
-            <li>게임 티켓은 <em>3개까지만</em> 구매 가능!</li>
+            <li>게임 티켓은 <em>2개까지만</em> 구매 가능!</li>
             <li>면제권은 <em>종류별로 1장씩만</em> 구매 가능<span class="note">(선생님 사인 없는 쿠폰은 사용 불가!)</span></li>
             <li>수량이 없는 물품은 구매할 수 없으니, 원하는 물품은 <em>빠르게</em> 구매하기!</li>
             <li>물건을 고르면 장바구니에서 <em>[주문하기]</em>를 누르고, <em>주문번호</em>를 기억하기</li>
@@ -832,7 +832,7 @@ function loading(on,txt){ $('loading').classList.toggle('on',!!on); if(txt) $('l
 /* ================= state ================= */
 let me={name:'',pw:''}, S=null, cart={};
 const CATMETA={
-  '참가권':{t:'Game Tickets',d:'룰렛·랜덤박스·가위바위보 참가권',ch:'chick',say:'게임 티켓은 3개까지만!'},
+  '참가권':{t:'Game Tickets',d:'룰렛·랜덤박스·가위바위보 참가권',ch:'chick',say:'게임 티켓은 2개까지만!'},
   '쿠폰':{t:'Coupons',d:'숙제·시험 면제권 (종류별 1장씩!)',ch:'cat_fish',say:'선생님 허락 받고 사용해줘!'},
   '간식':{t:'Snack',d:'이브·와비·디비가 준비한 랜덤 간식!',ch:'hamster_magni',say:'돋보기를 눌러서 뭐가 들었는지 보세요!'},
   '굿즈':{t:'Christmas Goods',d:'반짝반짝 크리스마스 굿즈',ch:'cat',say:'뭐가 나올지 두근두근!'},
@@ -1025,7 +1025,7 @@ function noticeModal(title,html,toShop){
 const boxA=$('boxArea'); let opening=false;
 boxA.onclick=async()=>{
   if(opening) return;
-  if(S.user.tickets.box<1){ $('boxMsg').innerHTML='랜덤박스 참가권이 없어요! <a href="#shop" style="color:var(--green)">마켓에서 참가권 사러 가기 →</a>'; noticeModal('🎟️ 참가권이 없어요!','랜덤박스 참가권을 마켓에서 먼저 사 주세요.<br>(1인 3장까지)',true); boxA.classList.add('shake'); setTimeout(()=>boxA.classList.remove('shake'),900); return; }
+  if(S.user.tickets.box<1){ $('boxMsg').innerHTML='랜덤박스 참가권이 없어요! <a href="#shop" style="color:var(--green)">마켓에서 참가권 사러 가기 →</a>'; noticeModal('🎟️ 참가권이 없어요!','랜덤박스 참가권을 마켓에서 먼저 사 주세요.<br>(1인 2장까지)',true); boxA.classList.add('shake'); setTimeout(()=>boxA.classList.remove('shake'),900); return; }
   opening=true; $('boxMsg').textContent=''; boxA.classList.add('shake');
   const [r]=await Promise.all([api('play',{game:'box'}),sleep(900)]);
   boxA.classList.remove('shake');
@@ -1096,7 +1096,7 @@ document.fonts&&document.fonts.load('41px Jua').then(()=>{ if(!spinning) drawWhe
 function setRot(){wc.style.transform=`rotate(${rot}deg)`}
 $('spinBtn').onclick=async function(){
   if(spinning) return;
-  if(S.user.tickets.roul<1){ $('roulMsg').innerHTML='룰렛 참가권이 없어요! <a href="#shop" style="color:var(--green)">마켓에서 참가권 사러 가기 →</a>'; noticeModal('🎟️ 참가권이 없어요!','룰렛 참가권을 마켓에서 먼저 사 주세요.<br>(1인 3장까지)',true); return; }
+  if(S.user.tickets.roul<1){ $('roulMsg').innerHTML='룰렛 참가권이 없어요! <a href="#shop" style="color:var(--green)">마켓에서 참가권 사러 가기 →</a>'; noticeModal('🎟️ 참가권이 없어요!','룰렛 참가권을 마켓에서 먼저 사 주세요.<br>(1인 2장까지)',true); return; }
   spinning=true; this.disabled=true; $('roulMsg').textContent='';
   let result=null, done=false;
   api('play',{game:'roul'}).then(r=>{result=r;});
