@@ -72,7 +72,9 @@ function E_num(v){ var n = Number(v); return isNaN(n) ? 0 : n; }
 function E_str(v){ return v === null || v === undefined ? '' : String(v).trim(); }
 function E_mark(o,k){ (o._dirty = o._dirty || []).indexOf(k) < 0 && o._dirty.push(k); }
 // 참가권 3종만 '1인최대'대로, 나머지 모든 물품은 종류별 1개까지
-function E_limit(i){ var l = E_num(i['1인최대']); return E_str(i['카테고리']) === '참가권' ? l : (l > 0 ? Math.min(l,1) : 1); }
+// 1인 구매 제한 (시트 '1인최대' 값과 상관없이 고정): 룰렛·랜덤박스 참가권 2개, 나머지 모두(가위바위보·면제권 포함) 1개
+var LIMIT_FIXED = {ticket_box:2, ticket_roul:2};
+function E_limit(i){ return LIMIT_FIXED[E_str(i['ID'])] || 1; }
 function E_hidden(i){ return E_str(i['판매']) === '숨김'; }
 function E_onSale(i){ var s = E_str(i['판매']).toUpperCase(); return s !== 'N' && s !== '숨김' && E_str(i['ID']) !== ''; }
 var ROUL_AGAIN = '한번 더', ROUL_MISS = '꽝';
@@ -125,14 +127,16 @@ function E_order(db, req, now){
   var u = E_findUser(db, req.name, req.pw), name = E_str(u['이름']);
   var cart = (req.cart || []).filter(function(c){ return c && E_num(c.qty) > 0; });
   if (!cart.length) throw new Error('장바구니가 비어 있어요!');
-  var total = 0, lines = [];
+  var total = 0, lines = [], inCart = {};
   cart.forEach(function(c){
     var it = db.items.filter(function(i){ return E_str(i['ID']) === E_str(c.id) && E_onSale(i); })[0];
     if (!it) throw new Error('지금 팔지 않는 물건이 장바구니에 있어요.');
     if (E_num(it['가격']) <= 0) throw new Error(E_str(it['이름']) + '은(는) 아직 판매 준비 중이에요!');
     var q = Math.floor(E_num(c.qty)), stock = E_stock(db,it).day, lim = E_limit(it);
     if (stock < q) throw new Error(stock <= 0 ? E_str(it['이름']) + '은(는) 오늘 다 팔렸어요!' : E_str(it['이름']) + ' 수량이 부족해요! 조금만 줄여 주세요.');
-    if (lim > 0 && E_bought(db,u,E_str(it['ID'])) + q > lim) throw new Error(E_str(it['이름']) + '은(는) 한 사람당 ' + lim + '개까지만 살 수 있어요!');
+    if (!(q >= 1)) throw new Error('수량을 다시 확인해 주세요.');
+    inCart[E_str(it['ID'])] = (inCart[E_str(it['ID'])] || 0) + q;
+    if (E_bought(db,u,E_str(it['ID'])) + inCart[E_str(it['ID'])] > lim) throw new Error(E_str(it['이름']) + '은(는) 한 사람당 ' + lim + '개까지만 살 수 있어요!');
     total += E_num(it['가격']) * q; lines.push({it:it, q:q});
   });
   if (total > E_num(u['포인트'])) throw new Error('포인트가 부족해요! (필요 ' + total.toLocaleString() + ' / 내 포인트 ' + E_num(u['포인트']).toLocaleString() + ')');

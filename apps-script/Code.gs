@@ -72,7 +72,9 @@ function E_num(v){ var n = Number(v); return isNaN(n) ? 0 : n; }
 function E_str(v){ return v === null || v === undefined ? '' : String(v).trim(); }
 function E_mark(o,k){ (o._dirty = o._dirty || []).indexOf(k) < 0 && o._dirty.push(k); }
 // 참가권 3종만 '1인최대'대로, 나머지 모든 물품은 종류별 1개까지
-function E_limit(i){ var l = E_num(i['1인최대']); return E_str(i['카테고리']) === '참가권' ? l : (l > 0 ? Math.min(l,1) : 1); }
+// 1인 구매 제한 (시트 '1인최대' 값과 상관없이 고정): 룰렛·랜덤박스 참가권 2개, 나머지 모두(가위바위보·면제권 포함) 1개
+var LIMIT_FIXED = {ticket_box:2, ticket_roul:2};
+function E_limit(i){ return LIMIT_FIXED[E_str(i['ID'])] || 1; }
 function E_hidden(i){ return E_str(i['판매']) === '숨김'; }
 function E_onSale(i){ var s = E_str(i['판매']).toUpperCase(); return s !== 'N' && s !== '숨김' && E_str(i['ID']) !== ''; }
 var ROUL_AGAIN = '한번 더', ROUL_MISS = '꽝';
@@ -125,14 +127,16 @@ function E_order(db, req, now){
   var u = E_findUser(db, req.name, req.pw), name = E_str(u['이름']);
   var cart = (req.cart || []).filter(function(c){ return c && E_num(c.qty) > 0; });
   if (!cart.length) throw new Error('장바구니가 비어 있어요!');
-  var total = 0, lines = [];
+  var total = 0, lines = [], inCart = {};
   cart.forEach(function(c){
     var it = db.items.filter(function(i){ return E_str(i['ID']) === E_str(c.id) && E_onSale(i); })[0];
     if (!it) throw new Error('지금 팔지 않는 물건이 장바구니에 있어요.');
     if (E_num(it['가격']) <= 0) throw new Error(E_str(it['이름']) + '은(는) 아직 판매 준비 중이에요!');
     var q = Math.floor(E_num(c.qty)), stock = E_stock(db,it).day, lim = E_limit(it);
     if (stock < q) throw new Error(stock <= 0 ? E_str(it['이름']) + '은(는) 오늘 다 팔렸어요!' : E_str(it['이름']) + ' 수량이 부족해요! 조금만 줄여 주세요.');
-    if (lim > 0 && E_bought(db,u,E_str(it['ID'])) + q > lim) throw new Error(E_str(it['이름']) + '은(는) 한 사람당 ' + lim + '개까지만 살 수 있어요!');
+    if (!(q >= 1)) throw new Error('수량을 다시 확인해 주세요.');
+    inCart[E_str(it['ID'])] = (inCart[E_str(it['ID'])] || 0) + q;
+    if (E_bought(db,u,E_str(it['ID'])) + inCart[E_str(it['ID'])] > lim) throw new Error(E_str(it['이름']) + '은(는) 한 사람당 ' + lim + '개까지만 살 수 있어요!');
     total += E_num(it['가격']) * q; lines.push({it:it, q:q});
   });
   if (total > E_num(u['포인트'])) throw new Error('포인트가 부족해요! (필요 ' + total.toLocaleString() + ' / 내 포인트 ' + E_num(u['포인트']).toLocaleString() + ')');
@@ -691,7 +695,7 @@ function 꾸미기() {
   명단반영();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var NOTES = {
-    items: {'ID':'사이트가 물건을 구분하는 이름표예요. 이미 팔린 물건은 바꾸지 마세요!','카테고리':'참가권 / 쿠폰 / 간식 / 문구 / 굿즈 중 하나','설명':'적어 두면 사이트 물건 이름 옆에 ? 버튼이 생기고, 누르면 이 설명이 보여요','초기재고':'처음 준비한 전체 수량 (직접 입력)','현재고':'자동: 초기재고 − 지금까지 팔린 수량','당일판매수량':'오늘 팔 수량 (직접 입력). 비워 두면 현재고만큼 팔아요','당일재고':'자동: 당일판매수량 − 오늘 팔린 수량. 사이트에는 이 숫자로 남은 정도가 보여요','이름':'사이트에 보이는 물건 이름','가격':'숫자만 (예: 3000)','1인최대':'참가권만 적용 (비우면 제한 없음). 참가권 외 물품은 자동으로 1인 1개','이미지':'사진 파일 이름 (보통 ID와 같아요)','판매':'Y = 판매 / N = 사이트에 회색 매진 카드로 보임 / 숨김 = 사이트 목록에서 아예 안 보임 (뽑기·룰렛 전용 상품)'},
+    items: {'ID':'사이트가 물건을 구분하는 이름표예요. 이미 팔린 물건은 바꾸지 마세요!','카테고리':'참가권 / 쿠폰 / 간식 / 문구 / 굿즈 중 하나','설명':'적어 두면 사이트 물건 이름 옆에 ? 버튼이 생기고, 누르면 이 설명이 보여요','초기재고':'처음 준비한 전체 수량 (직접 입력)','현재고':'자동: 초기재고 − 지금까지 팔린 수량','당일판매수량':'오늘 팔 수량 (직접 입력). 비워 두면 현재고만큼 팔아요','당일재고':'자동: 당일판매수량 − 오늘 팔린 수량. 사이트에는 이 숫자로 남은 정도가 보여요','이름':'사이트에 보이는 물건 이름','가격':'숫자만 (예: 3000)','1인최대':'참고용. 실제 제한은 코드에 고정: 룰렛·랜덤박스 참가권 2개, 나머지 전부 1개','이미지':'사진 파일 이름 (보통 ID와 같아요)','판매':'Y = 판매 / N = 사이트에 회색 매진 카드로 보임 / 숨김 = 사이트 목록에서 아예 안 보임 (뽑기·룰렛 전용 상품)'},
     users: {'이름':'학생이 입장할 때 쓰는 이름. 같은 이름 두 명은 안 돼요!','비밀번호':'초대장 번호','포인트':'남은 포인트. 주문하면 자동으로 줄어요'},
     box:   {'등급':'1등, 2등 …','가중치':'숫자가 클수록 잘 나와요 (확률)','남은수량':'0이 되면 더 이상 안 나와요'},
     roul:  {'칸':'룰렛 칸 번호 (순서)','표시':'룰렛 판에 보이는 짧은 글자','상품명':'당첨 기록에 남는 원래 이름','이미지':'비워 두면 그림 없이 글자만, 작은 칸이 돼요','확률':'뽑힐 확률(%). 합이 100이 아니어도 비율대로 뽑아요. 칸 크기와는 상관없어요','남은수량':'0이 되면 회색 칸이 되고 안 나와요'},
