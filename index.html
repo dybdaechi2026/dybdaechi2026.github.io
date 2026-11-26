@@ -1101,14 +1101,14 @@ $('spinBtn').onclick=async function(){
   spinning=true; this.disabled=true; $('roulMsg').textContent='';
   let result=null, done=false;
   api('play',{game:'roul'}).then(r=>{result=r;});
-  // ~1초: 0.5초 빠르게 돌다가(서버 응답 대기) 0.5초 동안 멈춤
-  const t0=performance.now(); const speed=26;
-  await new Promise(res=>{(function f(t){ rot+=speed; setRot(); if(result&&t-t0>=500) return res(); requestAnimationFrame(f);})(performance.now())});
+  // 총 2초: 1.2초 빠르게 돌다가(서버 응답 대기) 0.8초 동안 멈춤
+  const t0=performance.now(); const speed=24;
+  await new Promise(res=>{(function f(t){ rot+=speed; setRot(); if(result&&t-t0>=1200) return res(); requestAnimationFrame(f);})(performance.now())});
   if(!result.ok){ spinning=false; this.disabled=false; $('roulMsg').textContent=result.err; noticeModal('앗! 룰렛이 멈췄어요',esc(result.err)); if(result.state) applyState(result.state); return; }
   const g=wheelSegs()[result.result.index];
   const want=-(g.a0+g.d/2)+(Math.random()-.5)*g.d*.6;
-  let target=rot+200; target=target-((target%360)+360)%360+((want%360)+360)%360; if(target<rot+200) target+=360;
-  const start=rot, dist=target-start, dur=500, ts=performance.now();
+  let target=rot+300; target=target-((target%360)+360)%360+((want%360)+360)%360; if(target<rot+300) target+=360;
+  const start=rot, dist=target-start, dur=800, ts=performance.now();
   await new Promise(res=>{(function f(t){const p=Math.min(1,(t-ts)/dur), e=1-Math.pow(1-p,3); rot=start+dist*e; setRot(); if(p<1) requestAnimationFrame(f); else res();})(ts)});
   spinning=false; this.disabled=false;
   applyState(result.state); reveal(result.result.prize);
