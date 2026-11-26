@@ -754,7 +754,7 @@ footer{position:relative;z-index:2;margin-top:70px}
 
 <div id="loading"><div class="ld"><img src="img/xmas/chick.webp" alt=""><span id="ldTxt">산타가 확인 중...</span></div></div>
 
-<script src="shared.js?v=34"></script>
+<script src="shared.js?v=35"></script>
 <script>
 /* ===== 설정: 구글 Apps Script 웹 앱 주소를 넣으면 시트와 실시간 연결돼요 ===== */
 const API_URL = 'https://script.google.com/macros/s/AKfycbw-Gk3JwXC0E9ldyiBrsvX7HsDqRmU7s8WCZiZnNBBBd-a_rMvbjDk_Ze3HpQ5E1y6b/exec';
@@ -775,7 +775,8 @@ function phImg(name,cat){ const key=name+'|'+cat; if(phCache[key]) return phCach
   const nm=String(name||'').replace(/[<&>"]/g,''); const short=nm.length>9?nm.slice(0,9)+'…':nm;
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect x="6" y="6" width="188" height="188" rx="30" fill="${bg}" stroke="${bd}" stroke-width="6" stroke-dasharray="14 10"/><circle cx="100" cy="86" r="52" fill="#fff" stroke="${bd}" stroke-width="4"/><text x="100" y="108" font-size="62" text-anchor="middle">${ic}</text><text x="100" y="172" font-size="22" font-family="sans-serif" font-weight="700" fill="#5a3b2e" text-anchor="middle">${short}</text></svg>`;
   return phCache[key]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg); }
-const imgSrc = (k,name,cat) => k ? `img/items/${encodeURIComponent(k)}.webp` : (name ? phImg(name,cat) : 'img/xmas/chick.webp');
+const IMG_V='?v=35';
+const imgSrc = (k,name,cat) => k ? `img/items/${encodeURIComponent(k)}.webp${IMG_V}` : (name ? phImg(name,cat) : 'img/xmas/chick.webp');
 const IMG_FALLBACK = "this.onerror=null;this.src=this.dataset.ph||'img/xmas/chick.webp'";
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
 function ss(k,v){try{ if(v===undefined) return sessionStorage.getItem(k); if(v===null) sessionStorage.removeItem(k); else sessionStorage.setItem(k,v);}catch(e){return null}}
@@ -790,7 +791,7 @@ function mockInit(){
   mockDB.wins.push({'시간':'12/17 09:40:00','이름':'정도윤','게임':'랜덤박스','등급':'1등','상품명':'배달의 민족 3만원권','이미지':'baemin','학생코드':''});
   mockDB.box[0]['남은수량']=2;
 
-  mockDB.pools={'이브의 랜덤 짭짤 과자':['차카니','꼬꼬스낵'],'와비의 랜덤 달콤 과자':['초코 팅촉','꾀돌이'],'디비의 랜덤 사탕과 젤리':['하리보','새콤짱'],'랜덤 연필':['크리스마스 연필','DYB 연필'],'랜덤 지우개':['치이카와','짱구','DYB']};
+  mockDB.pools={'이브의 랜덤 짭짤 과자':['차카니','꼬꼬스낵'],'와비의 랜덤 달콤 과자':['초코 팅촉','꾀돌이'],'디비의 랜덤 사탕과 젤리':['하리보','새콤짱'],'꼬미의 랜덤 연필':['크리스마스 연필','DYB 연필'],'포스의 랜덤 지우개':['치이카와','짱구','DYB']};
   mockDB.users.forEach((u,i)=>{u['학년']=['4학년','5학년','6학년'][i%3];u['담임']=['박','최','이'][i%3]+'선생'});
   [['이서연','떡볶이가 진짜 맛있었어요!! 또 해 주세요 🌶️'],['박지호','선생님들 항상 감사합니다 ❤️'],['최하은','룰렛 돌리는 거 너무 재밌어요ㅎㅎ']].forEach(([n,t],k)=>
     mockDB.comments.push({'시간':`12/17 10:1${k}:00`,'학년':'','이름':n,'내용':t,'상태':'','학생코드':''}));
@@ -958,12 +959,12 @@ function renderPopular(){
 }
 /* 아직 과자가 안 정해진 랜덤 물품의 샘플 구성 */
 const SAMPLE_POOL={
-  '이브의 랜덤 짭짤 과자':[{n:'차카니',img:'img/items/pool_chakani.webp'},{n:'꼬꼬스낵',img:'img/items/pool_kkokko.webp'}],
-  '와비의 랜덤 달콤 과자':[{n:'초코 팅촉',img:'img/items/pool_tingchok.webp'},{n:'꾀돌이',img:'img/items/pool_kkoedol.webp'}],
-  '디비의 랜덤 사탕과 젤리':[{n:'하리보',img:'img/items/pool_haribo.webp'},{n:'새콤짱',img:'img/items/pool_saekom.webp'}]
+  '이브의 랜덤 짭짤 과자':[{n:'차카니',img:'img/items/pool_chakani.webp?v=35'},{n:'꼬꼬스낵',img:'img/items/pool_kkokko.webp?v=35'}],
+  '와비의 랜덤 달콤 과자':[{n:'초코 팅촉',img:'img/items/pool_tingchok.webp?v=35'},{n:'꾀돌이',img:'img/items/pool_kkoedol.webp?v=35'}],
+  '디비의 랜덤 사탕과 젤리':[{n:'하리보',img:'img/items/pool_haribo.webp?v=35'},{n:'새콤짱',img:'img/items/pool_saekom.webp?v=35'}]
 };
 const POOL_ART={'차카니':'pool_chakani','꼬꼬':'pool_kkokko','팅촉':'pool_tingchok','꾀돌':'pool_kkoedol','하리보':'pool_haribo','새콤':'pool_saekom'};
-function poolPic(x){ const k=Object.keys(POOL_ART).find(k=>x.includes(k)); return k?`img/items/${POOL_ART[k]}.webp`:''; }
+function poolPic(x){ const k=Object.keys(POOL_ART).find(k=>x.includes(k)); return k?`img/items/${POOL_ART[k]}.webp${IMG_V}`:''; }
 /* ================= MODAL ================= */
 function showModal(html,rays=false,jackpot=false,extra=''){
   $('mbox').className='mbox'+(jackpot?' jackpot':'')+(extra?' '+extra:''); $('mbox').innerHTML=html;

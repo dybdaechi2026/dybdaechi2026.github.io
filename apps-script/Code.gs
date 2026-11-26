@@ -30,13 +30,13 @@ var SEED = {
     ['snack_c','간식','와비의 랜덤 달콤 과자',1500,100,'','snack_c','Y','와비가 고른 달콤한 과자 중 하나를 랜덤으로 받아요!'],
     ['snack_a','간식','디비의 랜덤 사탕과 젤리',500,100,'','snack_a','Y','디비가 고른 사탕 또는 젤리 중 하나를 랜덤으로 받아요!'],
     ['charpen','문구','크리스마스 4색 볼펜',5000,100,'','charpen','Y',''],
-    ['pencil_rand','문구','랜덤 연필',3000,100,'','pencil_rand','Y','크리스마스 연필 또는 DYB 연필 중 하나를 랜덤으로 받아요!'],
+    ['pencil_rand','문구','꼬미의 랜덤 연필',3000,100,'','pencil_rand','Y','꼬미가 고른 크리스마스 연필 or DYB 연필 중 하나를 랜덤으로 받아요!'],
     ['highlighter','문구','형광펜',3000,100,'','highlighter','Y',''],
     ['pouch','문구','수정테이프',4500,100,'','pouch','Y',''],
     ['pen','문구','볼펜',2500,100,'','pen','Y',''],
     ['ring','굿즈','크리스마스 불빛 반지',5000,100,'','ring','Y',''],
     ['squishy','굿즈','크리스마스 스쿼시',4000,100,'','squishy','Y',''],
-    ['eraser_gacha','굿즈','랜덤 지우개',3000,100,'','eraser_gacha','Y','치이카와 or 짱구 or DYB 지우개 중 하나를 랜덤으로 받아요!'],
+    ['eraser_gacha','굿즈','포스의 랜덤 지우개',3000,100,'','eraser_gacha','Y','포스가 고른 치이카와 or 짱구 or DYB 지우개 중 하나를 랜덤으로 받아요!'],
     ['candy','간식','캔디 (담라)',0,100,'','damla','숨김','랜덤박스 7등 경품 (사이트 판매 X)']
   ],
   users: [
@@ -55,14 +55,14 @@ var SEED = {
   ],
   // 칸, 표시(룰렛 글자), 상품명(시트·당첨 기록), 이미지(비우면 글자만 + 작은 칸), 확률(%), 남은수량
   roul: [
-    [1,'랜덤 연필','랜덤 연필','pencil_rand',10,100],
+    [1,'랜덤 연필','꼬미의 랜덤 연필','pencil_rand',10,100],
     [2,'랜덤 사탕','디비의 랜덤 사탕과 젤리','snack_a',10,100],
     [3,'랜덤 달콤과자','와비의 랜덤 달콤 과자','snack_c',10,100],
     [4,'구두 면제권','구두 면제권','cp_oral',10,100],
     [5,'재시험 면제권','재시험 면제권','cp_retest',10,100],
     [6,'단어 커트 +5','단어커트 +5','cp_word',10,100],
     [7,'한번 더','한번 더','again',10,9999],
-    [8,'랜덤 지우개','랜덤 지우개','eraser_gacha',10,100],
+    [8,'랜덤 지우개','포스의 랜덤 지우개','eraser_gacha',10,100],
     [9,'꽝','꽝','miss',19,9999],
     [10,'전체 숙제 면제권','전체 숙제 면제권','',1,100]
   ]
@@ -518,7 +518,7 @@ function 초기재고반영() {
     var nm = String(r[nc]).trim();
     if (sum[nm] !== undefined && Number(r[ic]) !== sum[nm]) it.getRange(i+2, ic+1).setValue(sum[nm]);
     if (pools[nm] && dc >= 0) {
-      var who = (nm.match(/^(이브|와비|디비)/) || [])[1];
+      var who = (nm.match(/^(이브|와비|디비|꼬미|포스)/) || [])[1];
       var desc = (who ? who + '가 고른 ' : '') + pools[nm].join(' or ') + ' 중 하나를 랜덤으로 받아요!';
       if (String(r[dc]) !== desc) it.getRange(i+2, dc+1).setValue(desc);
     }
@@ -668,6 +668,7 @@ function onOpen() {
     .addItem('★ 새 물품 목록 적용 (물품·물품 구매·경품)', '새물품목록적용')
     .addItem('★ 룰렛·랜덤박스 새 구성 적용', '룰렛박스새구성적용')
     .addItem('★ 랜덤박스 7등 캔디 추가', '랜덤박스캔디추가')
+    .addItem('★ 랜덤 연필·지우개 이름 바꾸기', '연필지우개이름변경')
     .addSeparator()
     .addItem('지금 탭: 이름순 정렬 (가나다)', '이름순정렬')
     .addItem('지금 탭: 선생님 → 이름순 정렬 (명단·편지)', '담임순정렬')
@@ -901,10 +902,11 @@ function 물품구매시트() {
   }
   sh.getRange(first,11,ROWS,3).clearContent().clearFormat().clearDataValidations();
 
+  var POOL_SW = Object.keys(BUY_POOL).map(function(k){ return '"' + k + '","' + BUY_POOL[k] + '",'; }).join('');
   var fF = [], hF = [];
   for (var r = first; r <= last; r++) {
     fF.push(['=IF(OR($D' + r + '="",$E' + r + '=""),"",$D' + r + '*$E' + r + ')']);
-    hF.push(['=IF($A' + r + '="","",IFERROR(INDEX(\'물품\'!$A:$Z, MATCH($A' + r + ', INDEX(\'물품\'!$A:$Z,0,MATCH("이름",\'물품\'!$1:$1,0)),0), MATCH("현재고",\'물품\'!$1:$1,0)),IFERROR(INDEX(\'물품\'!$A:$Z, MATCH(SWITCH($B' + r + ',"사탕/젤리","디비의 랜덤 사탕과 젤리","짭짤과자 A","이브의 랜덤 짭짤 과자","짭짤과자 B","이브의 랜덤 짭짤 과자","달콤과자 A","와비의 랜덤 달콤 과자","달콤과자 B","와비의 랜덤 달콤 과자","랜덤 연필","랜덤 연필","랜덤 지우개","랜덤 지우개 뽑기",""), INDEX(\'물품\'!$A:$Z,0,MATCH("이름",\'물품\'!$1:$1,0)),0), MATCH("현재고",\'물품\'!$1:$1,0)),"없음")))']);
+    hF.push(['=IF($A' + r + '="","",IFERROR(INDEX(\'물품\'!$A:$Z, MATCH($A' + r + ', INDEX(\'물품\'!$A:$Z,0,MATCH("이름",\'물품\'!$1:$1,0)),0), MATCH("현재고",\'물품\'!$1:$1,0)),IFERROR(INDEX(\'물품\'!$A:$Z, MATCH(SWITCH($B' + r + ',' + POOL_SW + '""), INDEX(\'물품\'!$A:$Z,0,MATCH("이름",\'물품\'!$1:$1,0)),0), MATCH("현재고",\'물품\'!$1:$1,0)),"없음")))']);
   }
   sh.getRange(first,6,ROWS,1).setFormulas(fF);
   var gF = []; for (var r2 = first; r2 <= last; r2++) gF.push(['=IF($E' + r2 + '="","",$E' + r2 + ')']);
@@ -994,7 +996,7 @@ function 물품구매시트() {
 var BUY_CATS = ['사탕/젤리','짭짤과자 A','짭짤과자 B','달콤과자 A','달콤과자 B','랜덤 연필','랜덤 지우개','문구','면제권','굿즈','경품','기타'];
 // 물품 구매 카테고리 → 사이트 판매 물품 이름 (랜덤 지급 묶음)
 var BUY_POOL = {'사탕/젤리':'디비의 랜덤 사탕과 젤리','짭짤과자 A':'이브의 랜덤 짭짤 과자','짭짤과자 B':'이브의 랜덤 짭짤 과자',
-  '달콤과자 A':'와비의 랜덤 달콤 과자','달콤과자 B':'와비의 랜덤 달콤 과자','랜덤 연필':'랜덤 연필','랜덤 지우개':'랜덤 지우개'};
+  '달콤과자 A':'와비의 랜덤 달콤 과자','달콤과자 B':'와비의 랜덤 달콤 과자','랜덤 연필':'꼬미의 랜덤 연필','랜덤 지우개':'포스의 랜덤 지우개'};
 var BUY_SEED = [
   ['단어커트 +5','면제권'],['구두 면제권','면제권'],['한과목 숙제 면제권','면제권','N'],['재시험 면제권','면제권'],['전체 숙제 면제권','면제권','N'],
   ['랜덤 사탕 or 젤리 (하리보)','사탕/젤리'],['랜덤 사탕 or 젤리 (새콤짱)','사탕/젤리'],
@@ -1197,4 +1199,30 @@ function 랜덤박스캔디추가() {
   물품구매목록정리_(ss); 물품구매시트(); 초기재고반영();
   Logger.log('랜덤박스 캔디 추가 완료');
   try { SpreadsheetApp.getUi().alert('완료됨', '랜덤박스 7등 캔디 추가 및 확률 갱신 완료. 시간 될 때 [시트 꾸미기] 한 번 실행 권장.', SpreadsheetApp.getUi().ButtonSet.OK); } catch (x) {}
+}
+
+/** ★ 랜덤 연필·지우개 이름 바꾸기: 꼬미의 랜덤 연필 · 포스의 랜덤 지우개 (물품·룰렛 탭). 여러 번 실행해도 안전 */
+function 연필지우개이름변경() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var BYID = {pencil_rand:'꼬미의 랜덤 연필', eraser_gacha:'포스의 랜덤 지우개'};
+  var BYNM = {'랜덤 연필':'꼬미의 랜덤 연필', '랜덤 지우개':'포스의 랜덤 지우개', '랜덤 지우개 뽑기':'포스의 랜덤 지우개'};
+  var it = ss.getSheetByName(TAB_NAMES.items);
+  if (it && it.getLastRow() > 1) {
+    var ih = it.getRange(1,1,1,it.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
+    var idc = ih.indexOf('ID'), nc = ih.indexOf('이름');
+    if (idc >= 0 && nc >= 0) it.getRange(2,1,it.getLastRow()-1,ih.length).getValues().forEach(function(r, i){
+      var nn = BYID[String(r[idc]).trim()]; if (nn && String(r[nc]).trim() !== nn) it.getRange(i+2, nc+1).setValue(nn);
+    });
+  }
+  [TAB_NAMES.roul, TAB_NAMES.box].forEach(function(tn){
+    var sh = ss.getSheetByName(tn); if (!sh || sh.getLastRow() < 2) return;
+    var h = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
+    var c = h.indexOf('상품명'); if (c < 0) return;
+    sh.getRange(2, c+1, sh.getLastRow()-1, 1).getValues().forEach(function(r, i){
+      var nn = BYNM[String(r[0]).trim()]; if (nn) sh.getRange(i+2, c+1).setValue(nn);
+    });
+  });
+  물품구매시트(); 초기재고반영();
+  Logger.log('이름 변경 완료');
+  try { SpreadsheetApp.getUi().alert('완료됨', '꼬미의 랜덤 연필 · 포스의 랜덤 지우개로 이름 변경 완료.', SpreadsheetApp.getUi().ButtonSet.OK); } catch (x) {}
 }
