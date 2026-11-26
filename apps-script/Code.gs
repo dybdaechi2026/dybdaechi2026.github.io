@@ -13,7 +13,7 @@ var HEADERS = {
 var TAB_NAMES = {items:'물품',users:'학생',orders:'주문',box:'랜덤박스',roul:'룰렛',wins:'당첨기록',letters:'편지',comments:'댓글',banned:'금지어'};
 var LETTER_POINTS = 1000;   // 편지 한 번에 주는 포인트
 var LETTER_MAX = 1;         // 포인트를 받을 수 있는 편지 수 (1인)
-var COMMENT_MAX = 2;        // 1인 댓글 최대 개수
+var COMMENT_MAX = 1;        // 1인 댓글 최대 개수
 var COMMENT_POINTS = 500;   // 첫 댓글 포인트
 
 var SEED_ITEM_COLS = ['ID','카테고리','이름','가격','재고','1인최대','이미지','판매','설명'];
@@ -45,13 +45,14 @@ var SEED = {
   ],
   // 가중치 = 확률(%)
   box: [
-    ['1등','배달의 민족 3만원권','baemin',0.7,3,3],
-    ['2등','한과목 숙제 면제권','cp_hw',2.8,100,100],
-    ['3등','이브의 랜덤 짭짤 과자','snack_b',7,100,100],
-    ['4등','크리스마스 사탕','lollipop',10.5,100,100],
-    ['5등','랜덤 필기구','stationery_rand',21,100,100],
-    ['6등','구두 면제권','cp_oral',28,100,100],
-    ['7등','캔디','damla',30,100,100]
+    ['1등','배달의 민족 3만원권','baemin',1,1,1],
+    ['2등','한과목 숙제 면제권','cp_hw',9,100,100],
+    ['3등','이브의 랜덤 짭짤 과자','snack_b',10,100,100],
+    ['4등','크리스마스 사탕','lollipop',10,100,100],
+    ['5등','재시험 면제권','cp_retest',10,100,100],
+    ['6등','랜덤 필기구','stationery_rand',10,100,100],
+    ['7등','단어커트 +5','cp_word',20,100,100],
+    ['8등','담라 젤리','damla',30,100,100]
   ],
   // 칸, 표시(룰렛 글자), 상품명(시트·당첨 기록), 이미지(비우면 글자만 + 작은 칸), 확률(%), 남은수량
   roul: [
@@ -669,6 +670,7 @@ function onOpen() {
     .addItem('★ 룰렛·랜덤박스 새 구성 적용', '룰렛박스새구성적용')
     .addItem('★ 랜덤박스 7등 캔디 추가', '랜덤박스캔디추가')
     .addItem('★ 랜덤 연필·지우개 이름 바꾸기', '연필지우개이름변경')
+    .addItem('★ 랜덤박스 1~8등 새 구성 적용', '랜덤박스8등적용')
     .addSeparator()
     .addItem('지금 탭: 이름순 정렬 (가나다)', '이름순정렬')
     .addItem('지금 탭: 선생님 → 이름순 정렬 (명단·편지)', '담임순정렬')
@@ -769,7 +771,7 @@ function 꾸미기() {
       sh.setFrozenColumns(2); if (sh.getFilter()) sh.getFilter().remove(); sh.getRange(1,1,sh.getMaxRows(),n).createFilter(); }
     if (k === 'comments') { var cc = body('내용'); if (cc) { cc.setWrap(true).setHorizontalAlignment('left'); sh.setColumnWidth(col('내용'), 320); } }
     if (k === 'box') {
-      var gr = body('등급'); if (gr) gr.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['1등','2등','3등','4등','5등','6등','7등'], true).setAllowInvalid(true).build());
+      var gr = body('등급'); if (gr) gr.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['1등','2등','3등','4등','5등','6등','7등','8등'], true).setAllowInvalid(true).build());
     }
 
     // colour rules
@@ -1225,4 +1227,21 @@ function 연필지우개이름변경() {
   물품구매시트(); 초기재고반영();
   Logger.log('이름 변경 완료');
   try { SpreadsheetApp.getUi().alert('완료됨', '꼬미의 랜덤 연필 · 포스의 랜덤 지우개로 이름 변경 완료.', SpreadsheetApp.getUi().ButtonSet.OK); } catch (x) {}
+}
+
+/** ★ 랜덤박스 1~8등 새 구성 적용 (이전 내용은 _백업_ 탭). 여러 번 실행해도 같은 결과 */
+function 랜덤박스8등적용() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  setup();
+  var sh = ss.getSheetByName(TAB_NAMES.box); if (!sh) throw new Error('랜덤박스 탭이 없어요');
+  if (sh.getLastRow() > 0) sh.copyTo(ss).setName(TAB_NAMES.box + '_백업_' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'MMdd_HHmm'));
+  sh.getRange(1,1,sh.getMaxRows(),sh.getMaxColumns()).clearDataValidations();
+  ensureCols_(sh, HEADERS.box); reorderCols_(sh, HEADERS.box);
+  var h = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
+  if (sh.getLastRow() > 1) sh.getRange(2,1,sh.getLastRow()-1,h.length).clearContent();
+  var rr = SEED.box.map(function(r){ var o = {}; HEADERS.box.forEach(function(k,i){ o[k] = r[i]; }); return h.map(function(k){ return o[k] === undefined ? '' : o[k]; }); });
+  sh.getRange(2,1,rr.length,h.length).setValues(rr);
+  var wc = h.indexOf('가중치') + 1; if (wc > 0) sh.getRange(1, wc).setNote('뽑힐 확률(%)');
+  Logger.log('랜덤박스 1~8등 적용 완료');
+  try { SpreadsheetApp.getUi().alert('완료됨', '랜덤박스 1~8등 새 구성 적용 완료. (이전 내용은 _백업_ 탭)', SpreadsheetApp.getUi().ButtonSet.OK); } catch (x) {}
 }
